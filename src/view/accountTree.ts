@@ -1,14 +1,14 @@
 /**
- * 账号管理 Tree View
+ * Account管理 Tree View
  * 
  * 三层结构：
- * - 第1层：邮箱 (带星标表示当前账号)
- * - 第2层：分组 (显示配额百分比)
- * - 第3层：模型明细
+ * - 第1层：Email (带星标表示CurrentAccount)
+ * - 第2层：Group (ShowQuotaPercentage)
+ * - 第3层：Model明细
  * 
- * 数据来源：
- * - 账号列表：Cockpit Tools (WebSocket)
- * - 配额数据：ReactorCore.fetchQuotaForAccount (插件端逻辑，邮箱匹配)
+ * Data来源：
+ * - AccountList：Cockpit Tools (WebSocket)
+ * - QuotaData：ReactorCore.fetchQuotaForAccount (Plugin端逻辑，Email匹配)
  * - 设备指纹：Cockpit Tools (WebSocket)
  */
 
@@ -32,7 +32,7 @@ import { t } from '../shared/i18n';
 export type AccountTreeItem = AccountNode | GroupNode | ModelNode | DeviceNode | LoadingNode | ErrorNode;
 
 /**
- * 账号节点 (第1层)
+ * AccountNode (第1层)
  */
 export class AccountNode extends vscode.TreeItem {
     constructor(
@@ -63,7 +63,7 @@ export class AccountNode extends vscode.TreeItem {
 }
 
 /**
- * 分组节点 (第2层)
+ * GroupNode (第2层)
  */
 export class GroupNode extends vscode.TreeItem {
     constructor(
@@ -102,7 +102,7 @@ export class GroupNode extends vscode.TreeItem {
 }
 
 /**
- * 模型节点 (第3层)
+ * ModelNode (第3层)
  */
 export class ModelNode extends vscode.TreeItem {
     constructor(
@@ -118,7 +118,7 @@ export class ModelNode extends vscode.TreeItem {
 }
 
 /**
- * 设备指纹节点
+ * 设备指纹Node
  */
 export class DeviceNode extends vscode.TreeItem {
     constructor(
@@ -140,7 +140,7 @@ export class DeviceNode extends vscode.TreeItem {
 }
 
 /**
- * 加载中节点
+ * LoadingNode
  */
 export class LoadingNode extends vscode.TreeItem {
     constructor() {
@@ -150,7 +150,7 @@ export class LoadingNode extends vscode.TreeItem {
 }
 
 /**
- * 错误节点
+ * ErrorNode
  */
 export class ErrorNode extends vscode.TreeItem {
     constructor(message: string) {
@@ -181,29 +181,29 @@ export class AccountTreeProvider implements vscode.TreeDataProvider<AccountTreeI
     }
 
     /**
-     * 手动刷新（带冷却）
+     * 手动Refresh（带Cooldown）
      */
     async manualRefresh(): Promise<boolean> {
         return this.refreshService.manualRefresh();
     }
 
     /**
-     * 刷新所有账号的配额（串行，静默加载）
-     * 使用锁机制防止并发执行，避免重复 API 请求
+     * Refresh所有Account的Quota（串行，静默Load）
+     * 使用锁机制防止并发Execute，避免重复 API Request
      */
     async refreshQuotas(): Promise<void> {
         await this.refreshService.refreshQuotas();
     }
 
     /**
-     * 刷新所有账号列表
+     * Refresh所有AccountList
      */
     async refresh(): Promise<void> {
         await this.refreshService.refresh();
     }
 
     /**
-     * 加载指定账号的配额（显示加载状态，用于首次加载）
+     * Load指定Account的Quota（ShowLoadState，用于首次Load）
      */
     async loadAccountQuota(email: string): Promise<void> {
         await this.refreshService.loadAccountQuota(email);
@@ -247,7 +247,7 @@ export class AccountTreeProvider implements vscode.TreeDataProvider<AccountTreeI
             return [new ErrorNode(t('accountTree.noAccounts'))];
         }
 
-        // 保持账号原始顺序，不按当前账号排序
+        // 保持AccountOriginal顺序，不按CurrentAccountSort
         const nodes: AccountNode[] = [];
         for (const [email, account] of accounts) {
             nodes.push(new AccountNode(email, account.isCurrent, account.hasDeviceBound));
@@ -268,12 +268,12 @@ export class AccountTreeProvider implements vscode.TreeDataProvider<AccountTreeI
             ];
         }
 
-        // 加载中
+        // Loading
         if (!cache || cache.loading) {
             return [new LoadingNode()];
         }
 
-        // 错误
+        // Error
         if (cache.error) {
             return [
                 new ErrorNode(cache.error),
@@ -281,17 +281,17 @@ export class AccountTreeProvider implements vscode.TreeDataProvider<AccountTreeI
             ];
         }
 
-        // 显示分组
+        // ShowGroup
         const children: AccountTreeItem[] = [];
         const snapshot = cache.snapshot;
 
         if (snapshot.groups && snapshot.groups.length > 0) {
-            // 有分组，显示分组
+            // 有Group，ShowGroup
             for (const group of snapshot.groups) {
                 children.push(new GroupNode(group, email));
             }
         } else if (snapshot.models.length > 0) {
-            // 无分组但有模型，直接显示模型
+            // 无Group但有Model，直接ShowModel
             for (const model of snapshot.models) {
                 children.push(new ModelNode(model, email));
             }
@@ -299,21 +299,21 @@ export class AccountTreeProvider implements vscode.TreeDataProvider<AccountTreeI
             children.push(new ErrorNode(t('accountTree.noQuotaData')));
         }
 
-        // 设备指纹节点
+        // 设备指纹Node
         children.push(new DeviceNode(email, hasDevice));
 
         return children;
     }
 
     /**
-     * 获取当前账号
+     * GetCurrentAccount
      */
     getCurrentEmail(): string | null {
         return this.refreshService.getCurrentEmail();
     }
 
     /**
-     * 获取指定账号的 ID (从 Cockpit Tools)
+     * Get指定Account的 ID (从 Cockpit Tools)
      */
     async getAccountId(email: string): Promise<string | null> {
         return this.refreshService.getAccountId(email);
@@ -328,7 +328,7 @@ export function registerAccountTreeCommands(
     context: vscode.ExtensionContext,
     provider: AccountTreeProvider,
 ): void {
-    // Refresh (带冷却)
+    // Refresh (带Cooldown)
     context.subscriptions.push(
         vscode.commands.registerCommand('agCockpit.accountTree.refresh', async () => {
             // 手动触发重连
@@ -344,10 +344,10 @@ export function registerAccountTreeCommands(
         }),
     );
 
-    // Switch account (通过 WebSocket 请求 Cockpit Tools 执行真正的切换)
+    // Switch account (通过 WebSocket Request Cockpit Tools Execute真正的Switch)
     context.subscriptions.push(
         vscode.commands.registerCommand('agCockpit.accountTree.switch', async (node: AccountNode) => {
-            // 🆕 二次确认对话框
+            // 🆕 二次ConfirmDialog
             const currentEmail = provider.getCurrentEmail();
             const confirmMessage = currentEmail 
                 ? t('account.switch.confirmWithCurrent', { current: currentEmail, target: node.email })
@@ -355,22 +355,22 @@ export function registerAccountTreeCommands(
             
             const confirm = await vscode.window.showWarningMessage(
                 confirmMessage,
-                { modal: true },  // 模态对话框，自动带有取消按钮
+                { modal: true },  // 模态Dialog，自动带有CancelButton
                 t('account.switch.confirmOk'),
             );
             
-            // 用户点击"取消"或关闭对话框
+            // User点击"Cancel"或CloseDialog
             if (confirm !== t('account.switch.confirmOk')) {
                 return;  // 中止操作
             }
             
-            // 导入 WebSocket 客户端 (文件顶部已导入，这里不需要重新导入，但为了保持逻辑一致，使用顶部导入的实例)
+            // Import WebSocket Client (文件顶部已Import，这里不需要重新Import，但为了保持逻辑一致，使用顶部Import的实例)
             // const { cockpitToolsWs } = await import('../services/cockpitToolsWs');
             
-            // 尝试确保连接
+            // 尝试确保Connect
             cockpitToolsWs.ensureConnected();
             
-            // 检查连接状态
+            // CheckConnectState
             if (!cockpitToolsWs.isConnected) {
                 const launchAction = t('accountTree.launchCockpitTools');
                 const downloadAction = t('accountTree.downloadCockpitTools');
@@ -383,19 +383,19 @@ export function registerAccountTreeCommands(
                 if (action === launchAction) {
                     vscode.commands.executeCommand('agCockpit.accountTree.openManager');
                 } else if (action === downloadAction) {
-                    vscode.env.openExternal(vscode.Uri.parse('https://github.com/jlcodes99/antigravity-cockpit-tools/releases'));
+                    vscode.env.openExternal(vscode.Uri.parse('https://github.com/self-hosted/antigravity-cockpit-tools/releases'));
                 }
                 return;
             }
 
-            // 获取账号 ID
+            // GetAccount ID
             const accountId = await provider.getAccountId(node.email);
             if (!accountId) {
                 vscode.window.showWarningMessage(t('accountTree.cannotGetAccountId'));
                 return;
             }
 
-            // 通过 WebSocket 请求切换
+            // 通过 WebSocket RequestSwitch
             const sent = cockpitToolsWs.requestSwitchAccount(accountId);
             if (sent) {
                 vscode.window.showInformationMessage(

@@ -1,6 +1,6 @@
 /**
- * Antigravity Cockpit - 账号总览页面 JavaScript
- * 对齐 Cockpit Tools 账号总览交互
+ * Antigravity FuelGauge - Accounts Overview Page JavaScript
+ * 对齐 Cockpit Tools Accounts Overview交互
  */
 
 // eslint-disable-next-line no-redeclare
@@ -261,18 +261,18 @@
             else if (tier === 'ULTRA') counts.ULTRA += 1;
         });
 
-        // 检查是否有任何有效的等级信息
+        // Check是否有任何Valid的等级Info
         const hasTierInfo = counts.PRO > 0 || counts.ULTRA > 0;
         const filterContainer = elements.filterSelect?.parentElement;
 
         if (!hasTierInfo) {
-            // 没有等级信息，隐藏筛选下拉框容器并重置为全部
+            // 没有等级Info，Hidden筛选下拉框Container并Reset为全部
             if (filterContainer) filterContainer.classList.add('hidden');
             filterType = 'all';
             return;
         }
 
-        // 有等级信息，显示筛选下拉框容器
+        // 有等级Info，Show筛选下拉框Container
         if (filterContainer) filterContainer.classList.remove('hidden');
         elements.filterSelect.innerHTML = `
             <option value="all">${(getString('filterAll', 'All ({count})')).replace('{count}', counts.all)}</option>

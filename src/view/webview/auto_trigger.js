@@ -1,15 +1,15 @@
 /**
- * Antigravity Cockpit - Auto Trigger Tab JS (Compact Layout)
- * 自动触发功能的前端逻辑 - 紧凑布局版本
+ * Antigravity FuelGauge - Auto Trigger Tab JS (Compact Layout)
+ * Auto Trigger功能的前端逻辑 - 紧凑布局Version
  */
 
 (function () {
     'use strict';
 
-    // 获取 VS Code API
+    // Get VS Code API
     const vscode = window.__vscodeApi || (window.__vscodeApi = acquireVsCodeApi());
 
-    // 国际化
+    // i18n
     const i18n = window.__autoTriggerI18n || {};
     const t = (key) => i18n[key] || key;
     const authUi = window.AntigravityAuthUI
@@ -18,7 +18,7 @@
 
     const baseTimeOptions = ['06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '14:00', '16:00', '18:00', '20:00', '22:00'];
 
-    // 状态
+    // State
     let currentState = null;
     let availableModels = [];
     const blockedModelIds = new Set([
@@ -33,8 +33,8 @@
         'chat_20706',
         'chat_23310',
     ]);
-    let selectedModels = [];  // 从 state.schedule.selectedModels 获取
-    let selectedAccounts = [];  // 从 state.schedule.selectedAccounts 获取
+    let selectedModels = [];  // 从 state.schedule.selectedModels Get
+    let selectedAccounts = [];  // 从 state.schedule.selectedAccounts Get
     let availableAccounts = [];
     let activeAccountEmail = '';
     let antigravityToolsSyncEnabled = false;
@@ -42,7 +42,7 @@
     let testSelectedModels = [];
     let testSelectedAccounts = [];
 
-    // 配置状态
+    // ConfigState
     let configEnabled = false;
     let configTriggerMode = 'scheduled';
     let configMode = 'daily';
@@ -56,14 +56,14 @@
     const baseDailyTimes = [...baseTimeOptions];
     const baseWeeklyTimes = [...baseTimeOptions];
 
-    // 时段策略配置状态
+    // 时段策略ConfigState
     let configTimeWindowEnabled = false;
     let configTimeWindowStart = '09:00';
     let configTimeWindowEnd = '18:00';
     let configFallbackTimes = ['07:00'];
     let testMaxOutputTokens = 0;
 
-    // ============ 初始化 ============
+    // ============ Initialize ============
 
     function parseNonNegativeInt(value, fallback) {
         const parsed = typeof value === 'number' ? value : Number.parseInt(String(value), 10);
@@ -124,28 +124,28 @@
     }
 
     function bindEvents() {
-        // 授权按钮
+        // AuthorizationButton
         document.getElementById('at-auth-btn')?.addEventListener('click', () => {
             vscode.postMessage({ command: 'autoTrigger.authorize' });
         });
 
-        // 配置按钮
+        // ConfigButton
         document.getElementById('at-config-btn')?.addEventListener('click', openConfigModal);
         document.getElementById('at-config-close')?.addEventListener('click', closeConfigModal);
         document.getElementById('at-config-cancel')?.addEventListener('click', closeConfigModal);
         document.getElementById('at-config-save')?.addEventListener('click', saveConfig);
 
-        // 测试按钮
+        // TestButton
         document.getElementById('at-test-btn')?.addEventListener('click', openTestModal);
         document.getElementById('at-test-close')?.addEventListener('click', closeTestModal);
         document.getElementById('at-test-cancel')?.addEventListener('click', closeTestModal);
         document.getElementById('at-test-run')?.addEventListener('click', runTest);
 
-        // 历史按钮
+        // HistoryButton
         document.getElementById('at-history-btn')?.addEventListener('click', openHistoryModal);
         document.getElementById('at-history-close')?.addEventListener('click', closeHistoryModal);
 
-        // 取消授权确认弹框
+        // CancelAuthorizationConfirmModal
         document.getElementById('at-revoke-close')?.addEventListener('click', closeRevokeModal);
         document.getElementById('at-revoke-cancel')?.addEventListener('click', closeRevokeModal);
         document.getElementById('at-revoke-confirm')?.addEventListener('click', confirmRevoke);
@@ -156,7 +156,7 @@
             closeHistoryModal();
         });
 
-        // 模式选择
+        // 模式Select
         document.getElementById('at-mode-select')?.addEventListener('change', (e) => {
             configMode = e.target.value;
             updateModeConfigVisibility();
@@ -170,7 +170,7 @@
             updateConfigAvailability();
         });
 
-        // 唤醒方式
+        // Wakeup方式
         document.getElementById('at-trigger-mode-list')?.addEventListener('click', (e) => {
             const target = e.target.closest('.at-segment-btn');
             if (!target) return;
@@ -182,7 +182,7 @@
             updatePreview();
         });
 
-        // 时间选择 - Daily
+        // TimeSelect - Daily
         document.getElementById('at-daily-times')?.addEventListener('click', (e) => {
             if (e.target.classList.contains('at-chip')) {
                 const time = e.target.dataset.time;
@@ -193,7 +193,7 @@
 
         bindCustomTimeInput('at-daily-custom-time', 'at-daily-add-time', 'daily');
 
-        // 时间选择 - Weekly
+        // TimeSelect - Weekly
         document.getElementById('at-weekly-times')?.addEventListener('click', (e) => {
             if (e.target.classList.contains('at-chip')) {
                 const time = e.target.dataset.time;
@@ -204,7 +204,7 @@
 
         bindCustomTimeInput('at-weekly-custom-time', 'at-weekly-add-time', 'weekly');
 
-        // 星期选择
+        // 星期Select
         document.getElementById('at-weekly-days')?.addEventListener('click', (e) => {
             if (e.target.classList.contains('at-chip')) {
                 const day = parseInt(e.target.dataset.day, 10);
@@ -213,7 +213,7 @@
             }
         });
 
-        // 快捷按钮
+        // 快捷Button
         document.querySelectorAll('.at-quick-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const preset = btn.dataset.preset;
@@ -225,7 +225,7 @@
             });
         });
 
-        // 间隔配置
+        // IntervalConfig
         document.getElementById('at-interval-hours')?.addEventListener('change', (e) => {
             configIntervalHours = parseInt(e.target.value, 10) || 4;
             updatePreview();
@@ -239,7 +239,7 @@
             updatePreview();
         });
 
-        // Crontab 验证
+        // Crontab Validate
         document.getElementById('at-crontab-validate')?.addEventListener('click', () => {
             const input = document.getElementById('at-crontab-input');
             const result = document.getElementById('at-crontab-result');
@@ -256,7 +256,7 @@
             }
         });
 
-        // Crontab 输入监听
+        // Crontab 输入Listen
         document.getElementById('at-crontab-input')?.addEventListener('input', () => {
             if (configTriggerMode === 'crontab') {
                 updatePreview();
@@ -269,7 +269,7 @@
             updateTimeWindowConfigVisibility();
         });
 
-        // 时段策略时间范围
+        // 时段策略Time范围
         document.getElementById('at-time-window-start')?.addEventListener('change', (e) => {
             configTimeWindowStart = e.target.value;
         });
@@ -277,7 +277,7 @@
             configTimeWindowEnd = e.target.value;
         });
 
-        // Fallback 时间选择
+        // Fallback TimeSelect
         document.getElementById('at-fallback-times')?.addEventListener('click', (e) => {
             if (e.target.classList.contains('at-chip')) {
                 const time = e.target.dataset.time;
@@ -285,10 +285,10 @@
             }
         });
 
-        // Fallback 自定义时间添加
+        // Fallback CustomTime添加
         bindCustomTimeInput('at-fallback-custom-time', 'at-fallback-add-time', 'fallback');
 
-        // 点击模态框外部关闭（重命名弹框除外）
+        // 点击模态框外部Close（RenameModal除外）
         document.querySelectorAll('.modal').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal && modal.id !== 'rename-modal') {
@@ -317,16 +317,16 @@
     }
 
     function openTestModal() {
-        // 获取可用模型的 ID 列表
+        // Get可用Model的 ID List
         const availableIds = availableModels.map(m => m.id);
 
-        // 从 selectedModels 中过滤，只保留在可用模型列表中的
+        // 从 selectedModels 中Filter，只保留在可用ModelList中的
         const validSelected = selectedModels.filter(id => availableIds.includes(id));
 
         if (validSelected.length > 0) {
             testSelectedModels = [...validSelected];
         } else if (availableModels.length > 0) {
-            // 如果没有有效选择，默认选中第一个可用模型
+            // 如果没有ValidSelect，Default选中第一个可用Model
             testSelectedModels = [availableModels[0].id];
         } else {
             testSelectedModels = [];
@@ -416,7 +416,7 @@
         closeRevokeModal();
     }
 
-    // ============ 配置操作 ============
+    // ============ Config操作 ============
 
     function loadConfigFromState() {
         if (!currentState?.schedule) return;
@@ -443,7 +443,7 @@
         document.getElementById('at-interval-hours').value = configIntervalHours;
         document.getElementById('at-interval-start').value = configIntervalStart;
 
-        // 唤醒方式
+        // Wakeup方式
         if (s.wakeOnReset) {
             configTriggerMode = 'quota_reset';
         } else if (s.crontab) {
@@ -453,7 +453,7 @@
         }
         updateTriggerModeSelection();
 
-        // 自定义唤醒词
+        // CustomWakeup词
         const customPromptInput = document.getElementById('at-custom-prompt');
         if (customPromptInput) {
             customPromptInput.value = s.customPrompt || '';
@@ -465,14 +465,14 @@
             maxOutputTokensInput.value = String(configMaxOutputTokens);
         }
 
-        // 恢复 Crontab
+        // Resume Crontab
         const crontabInput = document.getElementById('at-crontab-input');
         if (crontabInput) {
             crontabInput.value = s.crontab || '';
         }
         document.getElementById('at-interval-end').value = configIntervalEnd;
 
-        // 恢复时段策略配置
+        // Resume时段策略Config
         configTimeWindowEnabled = s.timeWindowEnabled || false;
         configTimeWindowStart = s.timeWindowStart || '09:00';
         configTimeWindowEnd = s.timeWindowEnd || '18:00';
@@ -533,7 +533,7 @@
             wakeOnReset: wakeOnReset,
             customPrompt: document.getElementById('at-custom-prompt')?.value.trim() || undefined,
             maxOutputTokens: maxOutputTokens,
-            // 时段策略配置
+            // 时段策略Config
             timeWindowEnabled: wakeOnReset ? configTimeWindowEnabled : false,
             timeWindowStart: wakeOnReset && configTimeWindowEnabled ? configTimeWindowStart : undefined,
             timeWindowEnd: wakeOnReset && configTimeWindowEnabled ? configTimeWindowEnd : undefined,
@@ -577,7 +577,7 @@
         }
 
         if (testSelectedModels.length === 0) {
-            // 使用第一个可用模型作为默认
+            // 使用第一个可用Model作为Default
             const defaultModel = availableModels.length > 0 ? availableModels[0].id : 'gemini-3-flash';
             testSelectedModels = [defaultModel];
         }
@@ -590,7 +590,7 @@
             testSelectedAccounts = [activeAccountEmail];
         }
 
-        // 获取自定义唤醒词
+        // GetCustomWakeup词
         const customPrompt = document.getElementById('at-test-custom-prompt')?.value.trim() || undefined;
         const maxOutputTokens = parseNonNegativeInt(
             document.getElementById('at-test-max-output-tokens')?.value,
@@ -598,7 +598,7 @@
         );
         testMaxOutputTokens = maxOutputTokens;
 
-        // 设置加载状态
+        // SetLoadState
         isTestRunning = true;
         const runBtn = document.getElementById('at-test-run');
         if (runBtn) {
@@ -606,10 +606,10 @@
             runBtn.innerHTML = `<span class="at-spinner"></span> ${t('autoTrigger.testing')}`;
         }
 
-        // 关闭弹窗
+        // Close弹窗
         closeTestModal();
 
-        // 显示状态提示
+        // ShowStateTooltip
         showTestingStatus();
 
         vscode.postMessage({
@@ -625,7 +625,7 @@
         const statusCard = document.getElementById('at-status-card');
         if (!statusCard) return;
 
-        // 添加测试中提示
+        // 添加Test中Tooltip
         let testingBanner = document.getElementById('at-testing-banner');
         if (!testingBanner) {
             testingBanner = document.createElement('div');
@@ -643,7 +643,7 @@
             testingBanner.classList.add('hidden');
         }
 
-        // 重置按钮状态
+        // ResetButtonState
         isTestRunning = false;
         const runBtn = document.getElementById('at-test-run');
         if (runBtn) {
@@ -652,7 +652,7 @@
         }
     }
 
-    // ============ UI 更新 ============
+    // ============ UI Update ============
 
     function updateConfigAvailability() {
         const configBody = document.getElementById('at-wakeup-config-body');
@@ -822,7 +822,7 @@
     function toggleFallbackTimeSelection(time) {
         const idx = configFallbackTimes.indexOf(time);
         if (idx >= 0) {
-            // 至少保留一个时间点
+            // 至少保留一个Time点
             if (configFallbackTimes.length > 1) {
                 configFallbackTimes.splice(idx, 1);
             }
@@ -837,17 +837,17 @@
         const container = document.getElementById('at-fallback-times');
         if (!container) return;
 
-        // 确保常用时间点都有 chip（如果不在默认列表中则添加自定义 chip）
+        // 确保常用Time点都有 chip（如果不在DefaultList中则添加Custom chip）
         const defaultTimes = ['06:00', '07:00', '08:00'];
         
-        // 先移除旧的自定义 chip
+        // 先移除旧的Custom chip
         container.querySelectorAll('.at-chip[data-custom="true"]').forEach(chip => {
             if (!configFallbackTimes.includes(chip.dataset.time)) {
                 chip.remove();
             }
         });
 
-        // 添加不在默认列表里的自定义时间 chip
+        // 添加不在DefaultList里的CustomTime chip
         configFallbackTimes.forEach(time => {
             if (!defaultTimes.includes(time) && !container.querySelector(`.at-chip[data-time="${time}"]`)) {
                 const chip = document.createElement('div');
@@ -859,7 +859,7 @@
             }
         });
 
-        // 更新所有 chip 的选中状态
+        // Update所有 chip 的选中State
         container.querySelectorAll('.at-chip').forEach(chip => {
             chip.classList.toggle('selected', configFallbackTimes.includes(chip.dataset.time));
         });
@@ -1024,7 +1024,7 @@
                 ? `<span class="at-history-account" title="${escapeHtml(trigger.accountEmail)}">${escapeHtml(trigger.accountEmail)}</span>`
                 : '';
 
-            // 显示请求内容和响应
+            // ShowRequestContent和Response
             let contentHtml = '';
             if (trigger.prompt) {
                 contentHtml += `<div class="at-history-prompt">${escapeHtml(trigger.prompt)}</div>`;
@@ -1036,7 +1036,7 @@
                 contentHtml = `<div class="at-history-message">${statusText}</div>`;
             }
 
-            // 触发类型标签
+            // 触发类型Label
             let typeLabel = t('autoTrigger.typeManual');
             let typeClass = 'at-history-type-manual';
             if (trigger.triggerType === 'auto') {
@@ -1073,14 +1073,14 @@
         return div.innerHTML;
     }
 
-    // 格式化回复消息，识别 [[模型名]] 标记并高亮
+    // Format回复Message，识别 [[Model名]] 标记并高亮
     function formatResponseMessage(message) {
         if (!message) return '';
         
         // 先转义 HTML
         let escaped = escapeHtml(message);
         
-        // 识别 [[xxx]] 标记并替换为高亮标签
+        // 识别 [[xxx]] 标记并替换为高亮Label
         escaped = escaped.replace(/\[\[([^\]]+)\]\]/g, '<span class="at-model-name">$1</span>');
         
         // 将双换行转为 <br><br>
@@ -1108,7 +1108,7 @@
             // 使用 Crontab 计算预览
             const nextRuns = calculateCrontabNextRuns(crontab, 5);
             if (nextRuns.length === 0) {
-                container.innerHTML = `<li style="color: var(--vscode-errorForeground)">无效的 Crontab 表达式</li>`;
+                container.innerHTML = `<li style="color: var(--vscode-errorForeground)">Invalid的 Crontab 表达式</li>`;
                 return;
             }
             container.innerHTML = nextRuns.map((date, idx) => {
@@ -1141,7 +1141,7 @@
         }).join('');
     }
 
-    // 解析 Crontab 并计算下次运行时间（简化版）
+    // Parse Crontab 并计算下次RunningTime（简化版）
     function calculateCrontabNextRuns(crontab, count) {
         try {
             const parts = crontab.split(/\s+/);
@@ -1151,7 +1151,7 @@
             const results = [];
             const now = new Date();
 
-            // 简化解析：支持 * 和具体数值
+            // 简化Parse：支持 * 和具体数值
             const parseField = (field, max) => {
                 if (field === '*') return Array.from({ length: max + 1 }, (_, i) => i);
                 if (field.includes(',')) return field.split(',').map(Number);
@@ -1263,7 +1263,7 @@
         }
     }
 
-    // ============ 状态更新 ============
+    // ============ StateUpdate ============
 
     function updateState(state) {
         currentState = state;
@@ -1294,7 +1294,7 @@
             selectedModels = [availableModels[0].id];
         }
 
-        // 隐藏测试中状态（如果收到新状态说明测试完成了）
+        // HiddenTest中State（如果收到新State说明TestDone了）
         hideTestingStatus();
 
         updateAuthUI(state.authorization);
@@ -1375,14 +1375,14 @@
                     </div>
                 `;
 
-                // 点击授权信息区域打开账号管理弹框
+                // 点击AuthorizationInfo区域OpenAccount managementModal
                 authRow.querySelector('.quota-auth-info')?.addEventListener('click', () => {
                     if (typeof window.openAccountManageModal === 'function') {
                         window.openAccountManageModal();
                     }
                 });
 
-                // 管理账号按钮
+                // 管理AccountButton
                 document.getElementById('at-account-manage-btn')?.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (typeof window.openAccountManageModal === 'function') {
@@ -1425,17 +1425,17 @@
     function updateStatusUI(state) {
         const schedule = state.schedule || {};
 
-        // 状态
+        // State
         const statusValue = document.getElementById('at-status-value');
         if (statusValue) {
             statusValue.textContent = schedule.enabled ? t('autoTrigger.enabled') : t('autoTrigger.disabled');
             statusValue.style.color = schedule.enabled ? 'var(--vscode-charts-green)' : '';
         }
 
-        // 更新 Tab 状态点
+        // Update Tab State点
         const tabDot = document.getElementById('at-tab-status-dot');
         if (tabDot) {
-            // 只有在已授权且已启用的情况下显示状态点
+            // 只有在已Authorization且已Enable的情况下ShowState点
             const isAuthorized = state.authorization?.isAuthorized;
             if (isAuthorized && schedule.enabled) {
                 tabDot.classList.remove('hidden');
@@ -1444,23 +1444,23 @@
             }
         }
 
-        // 模式 - 支持 Crontab 和配额重置模式
+        // 模式 - 支持 Crontab 和QuotaReset模式
         const modeValue = document.getElementById('at-mode-value');
         if (modeValue) {
             let modeText = '--';
             if (schedule.wakeOnReset) {
-                // 配额重置模式
+                // QuotaReset模式
                 modeText = `🔄 ${t('autoTrigger.modeQuotaReset')}`;
             } else if (schedule.crontab) {
                 // Crontab 模式
                 modeText = `Crontab: ${schedule.crontab}`;
             } else if (schedule.repeatMode === 'daily' && schedule.dailyTimes?.length) {
-                // 显示所有时间点，最多 5 个
+                // Show所有Time点，最多 5 个
                 const times = schedule.dailyTimes.slice(0, 5).join(', ');
                 const suffix = schedule.dailyTimes.length > 5 ? '...' : '';
                 modeText = `${t('autoTrigger.daily')} ${times}${suffix}`;
             } else if (schedule.repeatMode === 'weekly' && schedule.weeklyDays?.length) {
-                // 显示选择的天和时间点（换行分开）
+                // ShowSelect的天和Time点（换行分开）
                 const dayNames = [t('time.sunday'), t('time.monday'), t('time.tuesday'),
                 t('time.wednesday'), t('time.thursday'), t('time.friday'), t('time.saturday')];
                 const days = schedule.weeklyDays.map(d => dayNames[d] || d).join(', ');
@@ -1473,7 +1473,7 @@
             modeValue.textContent = modeText;
         }
 
-        // 模型 - 显示所有选中模型的完整名称
+        // Model - Show所有选中Model的完整名称
         const modelsValue = document.getElementById('at-models-value');
         if (modelsValue) {
             const modelIds = schedule.selectedModels || ['gemini-3-flash'];
@@ -1482,12 +1482,12 @@
                 const model = availableModels.find(m => m.id === id);
                 return model?.displayName || id;
             };
-            // 显示所有模型名称，用逗号分隔
+            // Show所有Model名称，用逗号分隔
             const allNames = modelIds.map(id => getDisplayName(id));
             modelsValue.textContent = allNames.join(', ');
         }
 
-        // 账号 - 显示所有选中账号
+        // Account - Show所有选中Account
         const accountsValue = document.getElementById('at-accounts-value');
         if (accountsValue) {
             const accountEmails = selectedAccounts;
@@ -1496,7 +1496,7 @@
             } else if (accountEmails.length === 1) {
                 accountsValue.textContent = accountEmails[0];
             } else {
-                // 显示第一个账号 + 数量
+                // Show第一个Account + 数量
                 accountsValue.textContent = `${accountEmails[0]} (+${accountEmails.length - 1})`;
                 accountsValue.title = accountEmails.join('\n');
             }
@@ -1505,7 +1505,7 @@
         // 下次触发
         const nextValue = document.getElementById('at-next-value');
         if (nextValue) {
-            // 配额重置模式下无法预测下次触发时间
+            // QuotaReset模式下无法预测下次触发Time
             if (schedule.wakeOnReset) {
                 nextValue.textContent = '--';
             } else if (schedule.enabled && state.nextTriggerTime) {
@@ -1513,7 +1513,7 @@
                 const nextDate = new Date(state.nextTriggerTime);
                 nextValue.textContent = formatDateTime(nextDate);
             } else if (schedule.enabled && schedule.crontab) {
-                // 如果有 Crontab，前端计算下次触发时间
+                // 如果有 Crontab，前端计算下次触发Time
                 const nextRuns = calculateCrontabNextRuns(schedule.crontab, 1);
                 if (nextRuns.length > 0) {
                     nextValue.textContent = formatDateTime(nextRuns[0]);
@@ -1533,7 +1533,7 @@
         }
     }
 
-    // ============ 消息监听 ============
+    // ============ MessageListen ============
 
     window.addEventListener('message', event => {
         const message = event.data;
@@ -1564,14 +1564,14 @@
         }
     });
 
-    // 导出
+    // Export
     window.AutoTriggerTab = {
         init,
         updateState,
     };
     window.openRevokeModalForEmail = openRevokeModalForEmail;
 
-    // 初始化
+    // Initialize
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {

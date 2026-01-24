@@ -1,5 +1,5 @@
 /**
- * Antigravity Cockpit - Announcement Service (Stubbed)
+ * Antigravity FuelGauge - Announcement Service (Stubbed)
  * Remote announcements have been disabled for security and privacy.
  */
 

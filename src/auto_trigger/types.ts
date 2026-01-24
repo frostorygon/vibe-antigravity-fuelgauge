@@ -1,10 +1,10 @@
 /**
- * Antigravity Cockpit - Auto Trigger Types
- * 自动触发功能的类型定义
+ * Antigravity FuelGauge - Auto Trigger Types
+ * Auto Trigger功能的Type Definitions
  */
 
 /**
- * OAuth 凭证数据
+ * OAuth CredentialsData
  */
 export interface OAuthCredential {
     clientId: string;
@@ -31,7 +31,7 @@ export interface AccountInfo {
 }
 
 /**
- * 授权状态 (supports multiple accounts)
+ * AuthorizationState (supports multiple accounts)
  */
 export interface AuthorizationStatus {
     isAuthorized: boolean;
@@ -55,7 +55,7 @@ export type ScheduleRepeatMode = 'daily' | 'weekly' | 'interval';
 export type DayOfWeek = 0 | 1 | 2 | 3 | 4 | 5 | 6;  // 0 = Sunday
 
 /**
- * 调度配置
+ * 调度Config
  */
 export interface ScheduleConfig {
     enabled: boolean;
@@ -68,74 +68,74 @@ export interface ScheduleConfig {
     weeklyDays?: number[];  // [1, 2, 3, 4, 5] = 工作日 (0 = Sunday)
     weeklyTimes?: string[];
 
-    // 间隔模式
+    // Interval模式
     intervalHours?: number;
     intervalStartTime?: string;  // "07:00"
-    intervalEndTime?: string;    // "22:00" (可选，不填则全天)
+    intervalEndTime?: string;    // "22:00" (Optional，不填则全天)
 
-    // 高级: 原始 crontab 表达式
+    // 高级: Original crontab 表达式
     crontab?: string;
 
-    /** 选中的模型列表 (用于触发) */
+    /** 选中的ModelList (用于触发) */
     selectedModels: string[];
 
-    /** 选中的账号列表（用于自动唤醒，多账号） */
+    /** 选中的AccountList（用于自动Wakeup，多Account） */
     selectedAccounts?: string[];
 
-    /** 配额重置时自动唤醒 */
+    /** QuotaReset时自动Wakeup */
     wakeOnReset?: boolean;
 
-    /** 时段策略：启用后，满额重置只在指定时段内生效 */
+    /** 时段策略：Enable后，满额Reset只在指Scheduled段内生效 */
     timeWindowEnabled?: boolean;
 
-    /** 满额重置生效的时间窗口开始时间 (如 "09:00") */
+    /** 满额Reset生效的Time窗口StartTime (如 "09:00") */
     timeWindowStart?: string;
 
-    /** 满额重置生效的时间窗口结束时间 (如 "18:00") */
+    /** 满额Reset生效的Time窗口EndTime (如 "18:00") */
     timeWindowEnd?: string;
 
-    /** 时段外使用固定时间触发 (如 ["22:00", "07:00"]) */
+    /** 时段外使用固定Time触发 (如 ["22:00", "07:00"]) */
     fallbackTimes?: string[];
 
-    /** 自定义唤醒词 (默认: "hi") */
+    /** CustomWakeup词 (Default: "hi") */
     customPrompt?: string;
 
-    /** 最大输出 token 数 (默认: 8) */
+    /** 最大输出 token 数 (Default: 8) */
     maxOutputTokens?: number;
 }
 
 /**
- * 触发记录
+ * 触发Record
  */
 export interface TriggerRecord {
     timestamp: string;  // ISO 8601
     success: boolean;
-    prompt?: string;    // 发送的请求内容
+    prompt?: string;    // Send的RequestContent
     message?: string;   // AI 的回复
     duration?: number;  // ms
     totalTokens?: number; // 消耗的 token（总数）
-    promptTokens?: number; // 提示词 token
+    promptTokens?: number; // Tooltip词 token
     completionTokens?: number; // 生成 token
-    traceId?: string; // 请求 traceId
-    triggerType?: 'manual' | 'auto'; // 触发类型：手动测试 | 自动触发
-    triggerSource?: 'manual' | 'scheduled' | 'crontab' | 'quota_reset'; // 自动触发来源
-    accountEmail?: string; // 触发账号
+    traceId?: string; // Request traceId
+    triggerType?: 'manual' | 'auto'; // 触发类型：手动Test | Auto Trigger
+    triggerSource?: 'manual' | 'scheduled' | 'crontab' | 'quota_reset'; // Auto Trigger来源
+    accountEmail?: string; // 触发Account
 }
 
 /**
- * 模型信息（用于自动触发）
+ * ModelInfo（用于Auto Trigger）
  */
 export interface ModelInfo {
-    /** 模型 ID (用于 API 调用，如 gemini-3-pro-high) */
+    /** Model ID (用于 API 调用，如 gemini-3-pro-high) */
     id: string;
-    /** 显示名称 (如 Gemini 3 Pro (High)) */
+    /** Show名称 (如 Gemini 3 Pro (High)) */
     displayName: string;
-    /** 模型常量 (用于与配额匹配，如 MODEL_PLACEHOLDER_M8) */
+    /** Model常量 (用于与Quota匹配，如 MODEL_PLACEHOLDER_M8) */
     modelConstant: string;
 }
 
 /**
- * 自动触发状态
+ * Auto TriggerState
  */
 export interface AutoTriggerState {
     authorization: AuthorizationStatus;
@@ -143,12 +143,12 @@ export interface AutoTriggerState {
     lastTrigger?: TriggerRecord;
     recentTriggers: TriggerRecord[];  // 最近 10 条
     nextTriggerTime?: string;  // ISO 8601
-    /** 可选的模型列表（已过滤，只包含配额中显示的模型） */
+    /** Optional的ModelList（已Filter，只包含Quota中Show的Model） */
     availableModels: ModelInfo[];
 }
 
 /**
- * Webview 消息类型
+ * Webview Message类型
  */
 export interface AutoTriggerMessage {
     type:
@@ -165,17 +165,17 @@ export interface AutoTriggerMessage {
 }
 
 /**
- * Crontab 解析结果
+ * Crontab Parse结果
  */
 export interface CrontabParseResult {
     valid: boolean;
-    description?: string;  // 人类可读描述
-    nextRuns?: Date[];     // 接下来几次运行时间
+    description?: string;  // 人类可读Description
+    nextRuns?: Date[];     // 接下来几次RunningTime
     error?: string;
 }
 
 /**
- * 预设调度模板
+ * 预设调度Template
  */
 export interface SchedulePreset {
     id: string;
@@ -185,7 +185,7 @@ export interface SchedulePreset {
 }
 
 /**
- * 预设调度模板列表
+ * 预设调度TemplateList
  */
 export const SCHEDULE_PRESETS: SchedulePreset[] = [
     {
@@ -212,7 +212,7 @@ export const SCHEDULE_PRESETS: SchedulePreset[] = [
     {
         id: 'every4h',
         name: '每 4 小时触发',
-        description: '从 7:00 开始，每 4 小时触发一次',
+        description: '从 7:00 Start，每 4 小时触发一次',
         config: {
             repeatMode: 'interval',
             intervalHours: 4,

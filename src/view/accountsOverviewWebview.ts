@@ -1,6 +1,6 @@
 /**
- * Antigravity Cockpit - 账号总览 Webview
- * 独立的全屏页面，展示所有账号的配额状态
+ * Antigravity FuelGauge - Accounts Overview Webview
+ * 独立的全屏页面，展示所有Account的QuotaState
  */
 
 import * as vscode from 'vscode';
@@ -72,24 +72,24 @@ export class AccountsOverviewWebview {
     ) {}
 
     /**
-     * 设置关闭回调
+     * SetCloseCallback
      */
     onClose(callback: () => void): void {
         this.onCloseCallback = callback;
     }
 
     /**
-     * 显示账号总览页面
+     * ShowAccounts Overview Page
      */
     async show(): Promise<boolean> {
-        // 如果已存在，直接显示
+        // 如果已存在，直接Show
         if (this.panel) {
             this.panel.reveal(vscode.ViewColumn.One);
             await this.refreshAllAccounts();
             return true;
         }
 
-        // 创建新面板
+        // Create新Panel
         this.panel = vscode.window.createWebviewPanel(
             AccountsOverviewWebview.viewType,
             t('accountsOverview.title') || 'Accounts Overview',
@@ -103,10 +103,10 @@ export class AccountsOverviewWebview {
             },
         );
 
-        // 设置 HTML 内容
+        // Set HTML Content
         this.panel.webview.html = this.generateHtml(this.panel.webview);
 
-        // 监听消息
+        // ListenMessage
         this.panel.webview.onDidReceiveMessage(
             async (message: WebviewMessage) => {
                 await this.handleMessage(message);
@@ -120,7 +120,7 @@ export class AccountsOverviewWebview {
         });
         this.disposables.push(this.refreshSubscription);
 
-        // 监听面板关闭
+        // ListenPanelClose
         this.panel.onDidDispose(
             () => {
                 this.panel = undefined;
@@ -135,7 +135,7 @@ export class AccountsOverviewWebview {
             this.disposables,
         );
 
-        // 初始化数据
+        // InitializeData
         this.syncFromRefreshService();
         await this.refreshAllAccounts();
 
@@ -143,7 +143,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 关闭面板
+     * ClosePanel
      */
     dispose(): void {
         if (this.panel) {
@@ -154,7 +154,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 刷新所有账号的配额数据
+     * Refresh所有Account的QuotaData
      */
     private async refreshAllAccounts(): Promise<void> {
         await this.refreshService.refresh();
@@ -162,7 +162,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 刷新单个账号的配额
+     * Refresh单个Account的Quota
      */
     private async refreshAccount(email: string): Promise<void> {
         await this.refreshService.loadAccountQuota(email);
@@ -170,11 +170,11 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 转换配额分组数据
+     * 转换QuotaGroupData
      */
     private convertGroups(snapshot: QuotaSnapshot): AccountQuotaData['groups'] {
         if (!snapshot.groups || snapshot.groups.length === 0) {
-            // 如果没有分组，按模型创建单独的"分组"
+            // 如果没有Group，按ModelCreate单独的"Group"
             return snapshot.models.map(model => ({
                 groupId: model.modelId || model.label,
                 groupName: model.label,
@@ -208,7 +208,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 发送账号数据更新到 Webview
+     * SendAccountDataUpdate到 Webview
      */
     private sendAccountsUpdate(): void {
         if (!this.panel) {return;}
@@ -272,7 +272,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 获取国际化字符串
+     * Geti18n字符串
      */
     private getI18nStrings(): Record<string, string> {
         return {
@@ -327,58 +327,58 @@ export class AccountsOverviewWebview {
             'details': t('accountsOverview.details') || 'Details',
             'noQuotaData': t('accountsOverview.noQuotaData') || 'No quota data',
             // Add Account Modal
-            'authorize': t('accountsOverview.authorize') || '授权',
-            'import': t('accountsOverview.import') || '导入',
-            'oauthHint': t('accountsOverview.oauthHint') || '推荐使用浏览器完成 Google 授权',
-            'startOAuth': t('accountsOverview.startOAuth') || '开始 OAuth 授权',
-            'oauthContinue': t('accountsOverview.oauthContinue') || '我已授权，继续',
-            'oauthLinkLabel': t('accountsOverview.oauthLinkLabel') || '授权链接',
+            'authorize': t('accountsOverview.authorize') || 'Authorization',
+            'import': t('accountsOverview.import') || 'Import',
+            'oauthHint': t('accountsOverview.oauthHint') || '推荐使用浏览器Done Google Authorization',
+            'startOAuth': t('accountsOverview.startOAuth') || 'Start OAuth Authorization',
+            'oauthContinue': t('accountsOverview.oauthContinue') || '我已Authorization，Continue',
+            'oauthLinkLabel': t('accountsOverview.oauthLinkLabel') || 'Authorization链接',
             'oauthGenerating': t('accountsOverview.oauthGenerating') || '正在生成链接...',
-            'copy': t('common.copy') || '复制',
-            'oauthStarting': t('accountsOverview.oauthStarting') || '授权中...',
-            'oauthContinuing': t('accountsOverview.oauthContinuing') || '等待授权中...',
-            'copySuccess': t('accountsOverview.copySuccess') || '已复制',
-            'copyFailed': t('accountsOverview.copyFailed') || '复制失败',
-            'tokenHint': t('accountsOverview.tokenHint') || '输入 Refresh Token 直接添加账号',
-            'tokenPlaceholder': t('accountsOverview.tokenPlaceholder') || '粘贴 refresh_token 或 JSON 数组',
-            'tokenImportStart': t('accountsOverview.tokenImportStart') || '开始导入',
-            'tokenInvalid': t('accountsOverview.tokenInvalid') || 'refresh_token 无效',
-            'tokenImportProgress': t('accountsOverview.tokenImportProgress') || '正在导入 {current}/{total}',
-            'tokenImportSuccess': t('accountsOverview.tokenImportSuccess') || '导入成功',
-            'tokenImportPartial': t('accountsOverview.tokenImportPartial') || '部分导入完成',
-            'tokenImportFailed': t('accountsOverview.tokenImportFailed') || '导入失败',
-            'email': t('accountsOverview.email') || '邮箱',
-            'importHint': t('accountsOverview.importHint') || '从 JSON 文件或剪贴板导入账号',
-            'content': t('accountsOverview.content') || '内容',
-            'paste': t('accountsOverview.paste') || '粘贴',
-            'importFromExtension': t('accountsOverview.importFromExtension') || '从插件导入',
-            'importFromExtensionDesc': t('accountsOverview.importFromExtensionDesc') || '同步 Cockpit Tools 账号',
-            'importFromLocal': t('accountsOverview.importFromLocal') || '从本地数据库导入',
-            'importFromLocalDesc': t('accountsOverview.importFromLocalDesc') || '读取本机 Antigravity 登录账号',
-            'importFromTools': t('accountsOverview.importFromTools') || '导入 Antigravity Tools',
-            'importFromToolsDesc': t('accountsOverview.importFromToolsDesc') || '从 ~/.antigravity_tools/ 迁移历史账号',
-            'importNoAccounts': t('accountsOverview.importNoAccounts') || '未找到可导入账号',
-            'importSuccess': t('accountsOverview.importSuccess') || '导入成功',
-            'importFailed': t('accountsOverview.importFailed') || '导入失败',
-            'importLocalSuccess': t('accountsOverview.importLocalSuccess') || '导入完成',
-            'importProgress': t('accountsOverview.importProgress') || '正在导入 {current}/{total}: {email}',
-            'importingExtension': t('accountsOverview.importingExtension') || '导入中...',
-            'importingLocal': t('accountsOverview.importingLocal') || '导入中...',
-            'importingTools': t('accountsOverview.importingTools') || '导入中...',
+            'copy': t('common.copy') || 'Copy',
+            'oauthStarting': t('accountsOverview.oauthStarting') || 'Authorization中...',
+            'oauthContinuing': t('accountsOverview.oauthContinuing') || 'WaitingAuthorization中...',
+            'copySuccess': t('accountsOverview.copySuccess') || '已Copy',
+            'copyFailed': t('accountsOverview.copyFailed') || 'CopyFailed',
+            'tokenHint': t('accountsOverview.tokenHint') || '输入 Refresh Token 直接添加Account',
+            'tokenPlaceholder': t('accountsOverview.tokenPlaceholder') || 'Paste refresh_token 或 JSON 数组',
+            'tokenImportStart': t('accountsOverview.tokenImportStart') || 'StartImport',
+            'tokenInvalid': t('accountsOverview.tokenInvalid') || 'refresh_token Invalid',
+            'tokenImportProgress': t('accountsOverview.tokenImportProgress') || '正在Import {current}/{total}',
+            'tokenImportSuccess': t('accountsOverview.tokenImportSuccess') || 'ImportSuccess',
+            'tokenImportPartial': t('accountsOverview.tokenImportPartial') || '部分ImportDone',
+            'tokenImportFailed': t('accountsOverview.tokenImportFailed') || 'ImportFailed',
+            'email': t('accountsOverview.email') || 'Email',
+            'importHint': t('accountsOverview.importHint') || '从 JSON 文件或剪贴板ImportAccount',
+            'content': t('accountsOverview.content') || 'Content',
+            'paste': t('accountsOverview.paste') || 'Paste',
+            'importFromExtension': t('accountsOverview.importFromExtension') || '从PluginImport',
+            'importFromExtensionDesc': t('accountsOverview.importFromExtensionDesc') || 'Sync Cockpit Tools Account',
+            'importFromLocal': t('accountsOverview.importFromLocal') || '从LocalData库Import',
+            'importFromLocalDesc': t('accountsOverview.importFromLocalDesc') || '读取本机 Antigravity 登录Account',
+            'importFromTools': t('accountsOverview.importFromTools') || 'Import Antigravity Tools',
+            'importFromToolsDesc': t('accountsOverview.importFromToolsDesc') || '从 ~/.antigravity_tools/ 迁移HistoryAccount',
+            'importNoAccounts': t('accountsOverview.importNoAccounts') || '未找到可ImportAccount',
+            'importSuccess': t('accountsOverview.importSuccess') || 'ImportSuccess',
+            'importFailed': t('accountsOverview.importFailed') || 'ImportFailed',
+            'importLocalSuccess': t('accountsOverview.importLocalSuccess') || 'ImportDone',
+            'importProgress': t('accountsOverview.importProgress') || '正在Import {current}/{total}: {email}',
+            'importingExtension': t('accountsOverview.importingExtension') || 'Import中...',
+            'importingLocal': t('accountsOverview.importingLocal') || 'Import中...',
+            'importingTools': t('accountsOverview.importingTools') || 'Import中...',
             // Settings & Announcements
-            'settings': t('accountsOverview.settings') || '设置',
-            'announcements': t('accountsOverview.announcements') || '公告',
-            'noAnnouncements': t('accountsOverview.noAnnouncements') || '暂无公告',
-            'autoRefresh': t('accountsOverview.autoRefresh') || '自动刷新',
-            'autoRefreshDesc': t('accountsOverview.autoRefreshDesc') || '打开页面时自动刷新配额',
-            'openDashboard': t('accountsOverview.openDashboard') || '打开配额监视器',
-            'openDashboardDesc': t('accountsOverview.openDashboardDesc') || '返回配额监视器主界面',
+            'settings': t('accountsOverview.settings') || 'Set',
+            'announcements': t('accountsOverview.announcements') || 'Announcement',
+            'noAnnouncements': t('accountsOverview.noAnnouncements') || '暂无Announcement',
+            'autoRefresh': t('accountsOverview.autoRefresh') || '自动Refresh',
+            'autoRefreshDesc': t('accountsOverview.autoRefreshDesc') || 'Open页面时自动RefreshQuota',
+            'openDashboard': t('accountsOverview.openDashboard') || 'OpenQuota监视器',
+            'openDashboardDesc': t('accountsOverview.openDashboardDesc') || 'ReturnQuota监视器主界面',
             'go': t('accountsOverview.go') || '前往',
         };
     }
 
     /**
-     * 处理来自 Webview 的消息
+     * Handle来自 Webview 的Message
      */
     private async handleMessage(message: WebviewMessage): Promise<void> {
         switch (message.command) {
@@ -394,7 +394,7 @@ export class AccountsOverviewWebview {
                 break;
 
             case 'back':
-                // 调用返回命令，由命令处理 dispose 和打开 Dashboard
+                // 调用Return命令，由命令Handle dispose 和Open Dashboard
                 vscode.commands.executeCommand('agCockpit.backToDashboard');
                 break;
 
@@ -517,7 +517,7 @@ export class AccountsOverviewWebview {
                     if (cockpitToolsWs.isConnected) {
                         const syncResult = await cockpitToolsWs.setLanguage(languageForSync, 'extension');
                         if (!syncResult.success) {
-                            logger.warn(`[WS] 同步语言到桌面端失败: ${syncResult.message}`);
+                            logger.warn(`[WS] SyncLanguage到桌面端Failed: ${syncResult.message}`);
                         }
                     } else {
                         const { writeSyncSetting } = await import('../services/syncSettings');
@@ -583,7 +583,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 处理切换账号
+     * HandleSwitchAccount
      */
     private async handleSwitchAccount(email: string): Promise<void> {
         try {
@@ -615,12 +615,12 @@ export class AccountsOverviewWebview {
                 if (action === launchAction) {
                     vscode.commands.executeCommand('agCockpit.accountTree.openManager');
                 } else if (action === downloadAction) {
-                    vscode.env.openExternal(vscode.Uri.parse('https://github.com/jlcodes99/antigravity-cockpit-tools/releases'));
+                    vscode.env.openExternal(vscode.Uri.parse('https://github.com/self-hosted/antigravity-cockpit-tools/releases'));
                 }
                 return;
             }
 
-            // 获取账号列表找到对应的 account ID
+            // GetAccountList找到对应的 account ID
             const accountsResp = await cockpitToolsWs.getAccounts();
             const account = accountsResp.accounts.find(a => a.email.toLowerCase() === email.toLowerCase());
             
@@ -628,7 +628,7 @@ export class AccountsOverviewWebview {
                 throw new Error('Account not found in Cockpit Tools');
             }
 
-            // 通过 Cockpit Tools 切换
+            // 通过 Cockpit Tools Switch
             const result = await cockpitToolsWs.switchAccount(account.id);
             if (result.success) {
                 await credentialStorage.setActiveAccount(email);
@@ -650,7 +650,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 处理删除账号
+     * HandleDeleteAccount
      */
     private async handleDeleteAccount(email: string): Promise<void> {
         try {
@@ -670,7 +670,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 处理批量删除账号
+     * Handle批量DeleteAccount
      */
     private async handleDeleteAccounts(emails: string[]): Promise<void> {
         let successCount = 0;
@@ -691,7 +691,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 处理添加账号
+     * Handle添加Account
      */
     private async handleAddAccount(mode?: string): Promise<void> {
         const normalizedMode = (mode || '').toLowerCase();
@@ -1056,7 +1056,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 处理导出账号
+     * HandleExportAccount
      */
     private async handleExportAccounts(emails: string[]): Promise<void> {
         try {
@@ -1070,7 +1070,7 @@ export class AccountsOverviewWebview {
 
             const jsonContent = JSON.stringify(exportData, null, 2);
 
-            // 复制到剪贴板
+            // Copy到剪贴板
             await vscode.env.clipboard.writeText(jsonContent);
             this.postActionResult({
                 status: 'success',
@@ -1086,7 +1086,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 获取 Webview 资源 URI
+     * Get Webview 资源 URI
      */
     private getWebviewUri(webview: vscode.Webview, ...pathSegments: string[]): vscode.Uri {
         return webview.asWebviewUri(
@@ -1095,7 +1095,7 @@ export class AccountsOverviewWebview {
     }
 
     /**
-     * 生成 HTML 内容
+     * Generate HTML Content
      */
     private generateHtml(webview: vscode.Webview): string {
         const nonce = this.generateNonce();

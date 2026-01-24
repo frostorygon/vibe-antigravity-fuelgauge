@@ -1,6 +1,6 @@
 /**
- * Antigravity Cockpit - Trigger Service
- * 触发服务：执行自动对话触发
+ * Antigravity FuelGauge - Trigger Service
+ * Trigger Service：Execute自动对话触发
  */
 
 import * as fs from 'fs/promises';
@@ -14,7 +14,7 @@ import { cloudCodeClient } from '../shared/cloudcode_client';
 
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
 const RESET_TRIGGER_COOLDOWN_MS = 10 * 60 * 1000;
-const RESET_SAFETY_MARGIN_MS = 2 * 60 * 1000;  // 2 分钟安全边际，确保服务端已完成重置
+const RESET_SAFETY_MARGIN_MS = 2 * 60 * 1000;  // 2 分钟安全边际，确保Service端CompletedReset
 const MAX_TRIGGER_CONCURRENCY = 4;
 const DEFAULT_MAX_OUTPUT_TOKENS = 0;  // 0 means no limit
 const ANTIGRAVITY_SYSTEM_PROMPT = 'You are Antigravity, a powerful agentic AI coding assistant designed by the Google Deepmind team working on Advanced Agentic Coding.You are pair programming with a USER to solve their coding task. The task may require creating a new codebase, modifying or debugging an existing codebase, or simply answering a question.**Absolute paths only****Proactiveness**';
@@ -34,8 +34,8 @@ interface AvailableModelsCache {
 }
 
 /**
- * 触发服务
- * 负责发送对话请求以触发配额重置周期
+ * Trigger Service
+ * 负责Send对话Request以触发QuotaReset周期
  */
 class TriggerService {
     private recentTriggers: TriggerRecord[] = [];
@@ -45,13 +45,13 @@ class TriggerService {
     private readonly resetTriggerKey = 'lastResetTriggerTimestamps';
     private readonly resetTriggerAtKey = 'lastResetTriggerAt';
     
-    /** 记录每个模型上次触发时对应的 resetAt，防止重复触发 */
+    /** Record每个Model上次触发时对应的 resetAt，防止重复触发 */
     private lastResetTriggerTimestamps: Map<string, string> = new Map();
-    /** 记录每个模型上次触发时间（用于冷却） */
+    /** Record每个Model上次触发Time（用于Cooldown） */
     private lastResetTriggerAt: Map<string, number> = new Map();
 
     /**
-     * 初始化：从存储加载历史记录
+     * Initialize：从StorageLoadHistoryRecord
      */
     initialize(): void {
         this.loadHistory();
@@ -64,7 +64,7 @@ class TriggerService {
     }
     
     /**
-     * 加载重置触发时间戳记录
+     * LoadReset触发Time戳Record
      */
     private loadResetTriggerTimestamps(): void {
         const saved = credentialStorage.getState<Record<string, string>>(this.resetTriggerKey, {});
@@ -73,7 +73,7 @@ class TriggerService {
     }
     
     /**
-     * 保存重置触发时间戳记录
+     * SaveReset触发Time戳Record
      */
     private saveResetTriggerTimestamps(): void {
         const obj = Object.fromEntries(this.lastResetTriggerTimestamps);
@@ -81,7 +81,7 @@ class TriggerService {
     }
 
     /**
-     * 加载重置触发时间记录（冷却）
+     * LoadReset触发TimeRecord（Cooldown）
      */
     private loadResetTriggerAt(): void {
         const saved = credentialStorage.getState<Record<string, number>>(this.resetTriggerAtKey, {});
@@ -92,7 +92,7 @@ class TriggerService {
     }
 
     /**
-     * 保存重置触发时间记录（冷却）
+     * SaveReset触发TimeRecord（Cooldown）
      */
     private saveResetTriggerAt(): void {
         const obj = Object.fromEntries(this.lastResetTriggerAt);
@@ -100,18 +100,18 @@ class TriggerService {
     }
     
     /**
-     * 检查是否应该在配额重置时触发唤醒
+     * Check是否应该在QuotaReset时触发Wakeup
      * 
      * 触发条件（全部满足）：
      * 1. 满额：remaining >= limit
-     * 2. 时间边际：now >= lastResetAt + 2分钟（确保服务端已完成重置，避免滑动误触发）
-     * 3. 冷却：距上次触发 >= 10分钟
+     * 2. Time边际：now >= lastResetAt + 2分钟（确保Service端CompletedReset，避免滑动误触发）
+     * 3. Cooldown：距上次触发 >= 10分钟
      * 4. resetAt 变化：resetAt !== lastResetAt
      * 
-     * @param modelId 模型 ID
-     * @param resetAt 当前的重置时间点 (ISO 8601)
-     * @param remaining 当前剩余配额
-     * @param limit 配额上限
+     * @param modelId Model ID
+     * @param resetAt Current的ResetTime点 (ISO 8601)
+     * @param remaining CurrentRemainingQuota
+     * @param limit Quota上限
      * @returns true 如果应该触发
      */
     shouldTriggerOnReset(modelId: string, resetAt: string, remaining: number, limit: number): boolean {
@@ -126,9 +126,9 @@ class TriggerService {
         const lastTriggeredResetAt = this.lastResetTriggerTimestamps.get(modelId);
         logger.debug(`[TriggerService] shouldTriggerOnReset: ${modelId} lastTriggeredResetAt=${lastTriggeredResetAt}, current resetAt=${resetAt}`);
 
-        // 条件 2：时间边际检测
-        // 只有当上次记录的 resetAt 时间点 + 安全边际已过去，才认为是新周期
-        // 这可以防止 resetAt 滑动时的误触发，以及确保服务端已完成重置
+        // 条件 2：Time边际检测
+        // 只有当上次Record的 resetAt Time点 + 安全边际已过去，才认为是新周期
+        // 这可以防止 resetAt 滑动时的误触发，以及确保Service端CompletedReset
         if (lastTriggeredResetAt) {
             const lastResetTime = new Date(lastTriggeredResetAt).getTime();
             const safeTime = lastResetTime + RESET_SAFETY_MARGIN_MS;
@@ -139,7 +139,7 @@ class TriggerService {
             }
         }
 
-        // 条件 3：冷却检测
+        // 条件 3：Cooldown检测
         const lastTriggerAt = this.lastResetTriggerAt.get(modelId);
         if (lastTriggerAt !== undefined && now - lastTriggerAt < RESET_TRIGGER_COOLDOWN_MS) {
             logger.debug(`[TriggerService] shouldTriggerOnReset: ${modelId} cooldown active, skip`);
@@ -157,7 +157,7 @@ class TriggerService {
     }
     
     /**
-     * 记录已触发的重置时间点
+     * Record已触发的ResetTime点
      */
     markResetTriggered(modelId: string, resetAt: string): void {
         this.lastResetTriggerTimestamps.set(modelId, resetAt);
@@ -168,7 +168,7 @@ class TriggerService {
     }
 
     /**
-     * 从存储加载历史记录
+     * 从StorageLoadHistoryRecord
      */
     private loadHistory(): void {
         const saved = credentialStorage.getState<TriggerRecord[]>(this.storageKey, []);
@@ -177,20 +177,20 @@ class TriggerService {
     }
 
     /**
-     * 保存历史记录到存储
+     * SaveHistoryRecord到Storage
      */
     private saveHistory(): void {
         credentialStorage.saveState(this.storageKey, this.recentTriggers);
     }
 
     /**
-     * 清理过期记录（超过 7 天或超过 40 条）
+     * 清理过期Record（超过 7 天或超过 40 条）
      */
     private cleanupRecords(records: TriggerRecord[]): TriggerRecord[] {
         const now = Date.now();
         const maxAge = this.maxDays * 24 * 60 * 60 * 1000;  // 7 天的毫秒数
         
-        // 过滤掉超过 7 天的记录
+        // Filter掉超过 7 天的Record
         const filtered = records.filter(record => {
             const recordTime = new Date(record.timestamp).getTime();
             return (now - recordTime) < maxAge;
@@ -201,9 +201,9 @@ class TriggerService {
     }
 
     /**
-     * 执行触发
-     * 发送一条简短的对话消息以触发配额计时
-     * @param models 要触发的模型列表，如果不传则使用默认
+     * Execute trigger
+     * Send一条简短的对话Message以触发Quota计时
+     * @param models 要触发的ModelList，如果不传则使用Default
      */
     async trigger(
         models?: string[],
@@ -215,7 +215,7 @@ class TriggerService {
     ): Promise<TriggerRecord> {
         const startTime = Date.now();
         const triggerModels = (models && models.length > 0) ? models : ['gemini-3-flash'];
-        const promptText = customPrompt || 'hi';  // 使用自定义或默认唤醒词
+        const promptText = customPrompt || 'hi';  // 使用Custom或DefaultWakeup词
         const resolvedMaxOutputTokens = this.normalizeMaxOutputTokens(maxOutputTokens);
         let stage = 'start';
         const accountLabel = accountEmail ? ` (${accountEmail})` : '';
@@ -223,7 +223,7 @@ class TriggerService {
         logger.info(`[TriggerService] Starting trigger (${triggerType})${accountLabel} for models: ${triggerModels.join(', ')}, prompt: "${promptText}"...`);
 
         try {
-            // 1. 获取有效的 access_token
+            // 1. GetValid的 access_token
             stage = 'get_access_token';
             const tokenResult = await this.getAccessTokenResult(accountEmail);
             if (tokenResult.state !== 'ok' || !tokenResult.token) {
@@ -231,14 +231,14 @@ class TriggerService {
             }
             const accessToken = tokenResult.token;
 
-            // 2. 获取 project_id
+            // 2. Get project_id
             stage = 'get_project_id';
             const credential = accountEmail
                 ? await credentialStorage.getCredentialForAccount(accountEmail)
                 : await credentialStorage.getCredential();
             const projectId = credential?.projectId || await this.fetchProjectId(accessToken, accountEmail);
 
-            // 3. 发送触发请求
+            // 3. Send触发Request
             const results: Array<{
                 model: string;
                 ok: boolean;
@@ -305,12 +305,12 @@ class TriggerService {
             const failureCount = failureLines.length;
             const hasSuccess = successCount > 0;
 
-            // 4. 记录成功
+            // 4. RecordSuccess
             const tokensSummary = results.find(r => r.totalTokens !== undefined);
             const record: TriggerRecord = {
                 timestamp: new Date().toISOString(),
                 success: hasSuccess,
-                prompt: `唤醒词：${promptText}`,
+                prompt: `Wakeup词：${promptText}`,
                 message: summary,
                 duration: Date.now() - startTime,
                 totalTokens: tokensSummary?.totalTokens,
@@ -337,11 +337,11 @@ class TriggerService {
             const sourceLabel = triggerSource ?? triggerType;
             logger.error(`[TriggerService] Trigger failed${accountLabel} (stage=${stage}, source=${sourceLabel}, models=${triggerModels.join(', ')}): ${err.message}`);
             
-            // 记录失败
+            // RecordFailed
             const record: TriggerRecord = {
                 timestamp: new Date().toISOString(),
                 success: false,
-                prompt: `唤醒词：${promptText}`,
+                prompt: `Wakeup词：${promptText}`,
                 message: err.message,
                 duration: Date.now() - startTime,
                 traceId: undefined,
@@ -357,21 +357,21 @@ class TriggerService {
     }
 
     /**
-     * 获取最近的触发记录
+     * Get最近的触发Record
      */
     getRecentTriggers(): TriggerRecord[] {
         return [...this.recentTriggers];
     }
 
     /**
-     * 获取最后一次触发记录
+     * Get最后一次触发Record
      */
     getLastTrigger(): TriggerRecord | undefined {
         return this.recentTriggers[0];
     }
 
     /**
-     * 清空历史记录
+     * ClearHistoryRecord
      */
     clearHistory(): void {
         this.recentTriggers = [];
@@ -380,18 +380,18 @@ class TriggerService {
     }
 
     /**
-     * 添加触发记录
+     * 添加触发Record
      */
     private addRecord(record: TriggerRecord): void {
         this.recentTriggers.unshift(record);
         // 清理并限制数量
         this.recentTriggers = this.cleanupRecords(this.recentTriggers);
-        // 持久化保存
+        // 持久化Save
         this.saveHistory();
     }
 
     /**
-     * 获取 project_id
+     * Get project_id
      */
     private async fetchProjectId(accessToken: string, accountEmail?: string): Promise<string> {
         let projectId: string | undefined;
@@ -425,8 +425,8 @@ class TriggerService {
     }
 
     /**
-     * 获取可用模型列表
-     * @param filterByConstants 可选，配额中显示的模型常量列表，用于过滤
+     * Get可用ModelList
+     * @param filterByConstants Optional，Quota中Show的Model常量List，用于Filter
      */
     async fetchAvailableModels(
         filterByConstants?: string[],
@@ -640,7 +640,7 @@ class TriggerService {
             }
         }
 
-        // 如果没有从流中解析到，使用 data 兜底
+        // 如果没有从流中Parse到，使用 data 兜底
         if (replyParts.length === 0 && result.data) {
             try {
                 processObj(result.data);
@@ -655,9 +655,9 @@ class TriggerService {
     }
 
     /**
-     * 发送触发请求
-     * 发送一条简短的消息来触发配额计时
-     * @param prompt 唤醒词，默认 "hi"
+     * Send触发Request
+     * Send一条简短的Message来触发Quota计时
+     * @param prompt Wakeup词，Default "hi"
      * @returns AI 的简短回复
      */
     private async sendTriggerRequest(
@@ -693,7 +693,7 @@ class TriggerService {
         }
 
         const text = result.text || JSON.stringify(result.data);
-        // 输出完整响应，便于调试
+        // 输出完整Response，便于Debug
         logger.info(`[TriggerService] streamGenerateContent response: ${text.substring(0, 2000)}`);
 
         const parsed = this.parseStreamResult(result);
@@ -741,5 +741,5 @@ class TriggerService {
     }
 }
 
-// 导出单例
+// Export单例
 export const triggerService = new TriggerService();

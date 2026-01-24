@@ -1,12 +1,12 @@
 /**
- * Antigravity Cockpit - 国际化支持
+ * Antigravity FuelGauge - Internationalization Support
  * i18n implementation supporting 15 languages
  */
 
 import * as vscode from 'vscode';
 import { en, ja, es, de, fr, ptBR, ru, ko, it, tr, pl, cs, ar, vi } from './translations';
 
-/** 支持的语言 */
+/** 支持的Language */
 export type SupportedLocale =
     | 'en'
     | 'en'
@@ -24,7 +24,7 @@ export type SupportedLocale =
     | 'ar'
     | 'vi';
 
-/** 语言显示名称映射 */
+/** LanguageShow名称映射 */
 export const localeDisplayNames: Record<SupportedLocale, string> = {
     'en': 'English',
     'ja': '日本語',
@@ -42,12 +42,12 @@ export const localeDisplayNames: Record<SupportedLocale, string> = {
     'vi': 'Tiếng Việt',
 };
 
-/** 翻译键值对 */
+/** Translation键值对 */
 interface TranslationMap {
     [key: string]: string;
 }
 
-/** 翻译资源 */
+/** Translation资源 */
 const translations: Record<SupportedLocale, TranslationMap> = {
     'en': en,
     'ja': ja,
@@ -65,7 +65,7 @@ const translations: Record<SupportedLocale, TranslationMap> = {
     'vi': vi,
 };
 
-/** 语言代码映射 - 将 VSCode 语言代码映射到我们支持的语言 */
+/** Language code mapping - 将 VSCode Language code mapping到我们支持的Language */
 const localeMapping: Record<string, SupportedLocale> = {
     'en': 'en',
     'en-us': 'en',
@@ -88,7 +88,7 @@ const localeMapping: Record<string, SupportedLocale> = {
 };
 
 /**
- * 规范化外部传入的语言值
+ * 规范化外部传入的Language值
  */
 export function normalizeLocaleInput(languageSetting: string): string {
     const trimmed = languageSetting.trim().toLowerCase();
@@ -108,17 +108,17 @@ export function normalizeLocaleInput(languageSetting: string): string {
     return trimmed;
 }
 
-/** i18n 服务类 */
+/** i18n Service类 */
 class I18nService {
     private currentLocale: SupportedLocale = 'en';
-    private manualLocale: string = 'auto'; // 用户手动设置的语言，'auto' 表示跟随 VS Code
+    private manualLocale: string = 'auto'; // User手动Set的Language，'auto' 表示跟随 VS Code
 
     constructor() {
         this.detectLocale();
     }
 
     /**
-     * 检测当前语言环境（基于 VS Code 设置）
+     * 检测Current languageEnvironment（基于 VS Code Set）
      */
     private detectLocale(): void {
         const vscodeLocale = vscode.env.language.toLowerCase();
@@ -129,20 +129,20 @@ class I18nService {
             return;
         }
 
-        // 尝试匹配语言前缀
+        // 尝试匹配Language前缀
         const langPrefix = vscodeLocale.split('-')[0];
         if (localeMapping[langPrefix]) {
             this.currentLocale = localeMapping[langPrefix];
             return;
         }
 
-        // 默认使用英文
+        // Default使用英文
         this.currentLocale = 'en';
     }
 
     /**
-     * 应用语言设置
-     * @param languageSetting 语言设置值，'auto' 跟随 VS Code，其他为具体语言代码
+     * Apply language setting
+     * @param languageSetting LanguageSet值，'auto' 跟随 VS Code，其他为具体Language代码
      */
     applyLanguageSetting(languageSetting: string): boolean {
         const previousLocale = this.currentLocale;
@@ -152,12 +152,12 @@ class I18nService {
             // 跟随 VS Code
             this.detectLocale();
         } else {
-            // 验证是否为支持的语言
+            // Validate是否为支持的Language
             const supportedLocales = Object.keys(translations) as SupportedLocale[];
             if (supportedLocales.includes(languageSetting as SupportedLocale)) {
                 this.currentLocale = languageSetting as SupportedLocale;
             } else {
-                // 不支持的语言，回退到 VS Code
+                // 不支持的Language，回退到 VS Code
                 this.detectLocale();
             }
         }
@@ -166,16 +166,16 @@ class I18nService {
     }
 
     /**
-     * 获取当前手动设置的语言
+     * GetCurrent手动Set的Language
      */
     getManualLocale(): string {
         return this.manualLocale;
     }
 
     /**
-     * 获取翻译文本
-     * @param key 翻译键
-     * @param params 替换参数
+     * Get translation文本
+     * @param key Translation键
+     * @param params 替换Parameter
      */
     t(key: string, params?: Record<string, string | number>): string {
         const translation = translations[this.currentLocale]?.[key]
@@ -186,7 +186,7 @@ class I18nService {
             return translation;
         }
 
-        // 替换参数 {param} -> value
+        // 替换Parameter {param} -> value
         return Object.entries(params).reduce(
             (text, [paramKey, paramValue]) =>
                 text.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(paramValue)),
@@ -195,42 +195,42 @@ class I18nService {
     }
 
     /**
-     * 获取当前语言
+     * GetCurrent language
      */
     getLocale(): SupportedLocale {
         return this.currentLocale;
     }
 
     /**
-     * 设置语言
+     * Set language
      */
     setLocale(locale: SupportedLocale): void {
         this.currentLocale = locale;
     }
 
     /**
-     * 获取所有翻译（用于 Webview）
+     * Get所有Translation（用于 Webview）
      */
     getAllTranslations(): TranslationMap {
         return { ...translations['en'], ...translations[this.currentLocale] };
     }
 
     /**
-     * 获取所有支持的语言列表
+     * Get所有支持的LanguageList
      */
     getSupportedLocales(): SupportedLocale[] {
         return Object.keys(translations) as SupportedLocale[];
     }
 
     /**
-     * 获取语言显示名称
+     * GetLanguageShow名称
      */
     getLocaleDisplayName(locale: SupportedLocale): string {
         return localeDisplayNames[locale] || locale;
     }
 }
 
-// 导出单例
+// Export单例
 export const i18n = new I18nService();
 
 // 便捷函数

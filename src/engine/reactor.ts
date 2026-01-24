@@ -1,6 +1,6 @@
 /**
- * Antigravity Cockpit - 反应堆核心
- * 负责与 Antigravity API 通信，获取配额数据
+ * Antigravity FuelGauge - Reactor Core
+ * 负责与 Antigravity API 通信，GetQuotaData
  */
 
 import * as https from 'https';
@@ -77,7 +77,7 @@ interface AuthorizedModelInfo {
     displayName?: string;
     model?: string;
     quotaInfo?: AuthorizedQuotaInfo;
-    // 模型能力字段
+    // Model能力字段
     supportsImages?: boolean;
     supportsVideo?: boolean;
     supportsThinking?: boolean;
@@ -97,7 +97,7 @@ interface AuthorizedQuotaResponse {
 
 
 /**
- * 反应堆核心类
+ * Reactor Core类
  * 管理与后端 API 的通信
  */
 export class ReactorCore {
@@ -110,27 +110,27 @@ export class ReactorCore {
     public currentInterval: number = 0;
     private lastScanDiagnostics?: ScanDiagnostics;
     
-    /** 上一次的配额快照缓存 */
+    /** 上一次的Quota快照Cache */
     private lastSnapshot?: QuotaSnapshot;
     /** 上一次快照的来源 */
     private lastSnapshotSource?: 'local' | 'authorized';
-    /** 上一次的原始 API 响应缓存（用于 reprocess 时重新生成分组） */
+    /** 上一次的Original API ResponseCache（用于 reprocess 时重新生成Group） */
     private lastRawResponse?: ServerUserStatusResponse;
-    /** 上一次的授权配额模型缓存（用于 reprocess 时重新生成分组） */
+    /** 上一次的AuthorizationQuotaModelCache（用于 reprocess 时重新生成Group） */
     private lastAuthorizedModels?: ModelQuotaInfo[];
-    /** 本地配额上次拉取时间 */
+    /** LocalQuota上次拉取Time */
     private lastLocalFetchedAt?: number;
-    /** 授权配额上次拉取时间 */
+    /** AuthorizationQuota上次拉取Time */
     private lastAuthorizedFetchedAt?: number;
-    /** 是否已经成功获取过配额数据（用于决定是否上报后续错误） */
+    /** 是否已经SuccessGet过QuotaData（用于决定是否上报后续Error） */
     private hasSuccessfulSync: boolean = false;
-    /** 初始化同步重试标识，用于中断本地重试流程 */
+    /** InitializeSyncRetry标识，用于中断LocalRetry流程 */
     private initRetryToken: number = 0;
-    /** 本地模式下的账户邮箱（从 state.vscdb 读取） */
+    /** Local模式下的账户Email（从 state.vscdb 读取） */
     private localAccountEmail?: string;
-    /** 本地模式是否使用远端 API */
+    /** Local模式是否使用远端 API */
     private localUsingRemoteApi: boolean = false;
-    /** 当前用户在 Antigravity 中选中的模型 ID */
+    /** CurrentUser在 Antigravity 中选中的Model ID */
     private activeModelId?: string;
 
     constructor() {
@@ -138,7 +138,7 @@ export class ReactorCore {
     }
 
     /**
-     * 启动反应堆，设置连接参数
+     * Start reactor，SetConnectParameter
      */
     engage(port: number, token: string, diagnostics?: ScanDiagnostics): void {
         this.port = port;
@@ -148,7 +148,7 @@ export class ReactorCore {
     }
 
     /**
-     * 获取最新的配额快照
+     * GetLatest的Quota快照
      */
     getLatestSnapshot(): QuotaSnapshot | undefined {
         return this.lastSnapshot;
@@ -275,16 +275,16 @@ export class ReactorCore {
     }
 
     /**
-     * 获取指定账号的配额快照
-     * 复用现有的解析、过滤、分组逻辑，确保与 Dashboard 一致
-     * @param email 账号邮箱
-     * @returns 配额快照
+     * Get指定Account的Quota快照
+     * 复用现有的Parse、Filter、Group逻辑，确保与 Dashboard 一致
+     * @param email AccountEmail
+     * @returns Quota快照
      */
     async fetchQuotaForAccount(email: string): Promise<QuotaSnapshot> {
         logger.info(`[ReactorCore] Fetching quota for account: ${email}`);
 
         try {
-            // 获取该账号的 token
+            // Get该Account的 token
             const tokenStatus = await oauthService.getAccessTokenStatusForAccount(email);
             if (tokenStatus.state === 'invalid_grant') {
                 throw new CloudCodeAuthError(`Account ${email}: Authorization expired`);
@@ -293,14 +293,14 @@ export class ReactorCore {
                 throw new Error(`Account ${email}: Token unavailable (${tokenStatus.state})`);
             }
 
-            // 获取 projectId
+            // Get projectId
             const credential = await credentialStorage.getCredentialForAccount(email);
             const projectId = credential?.projectId;
 
-            // 获取配额模型（复用现有方法）
+            // GetQuotaModel（复用现有方法）
             const models = await this.fetchAuthorizedQuotaModels(tokenStatus.token, projectId);
 
-            // 构建快照（复用现有分组/过滤逻辑）
+            // 构建快照（复用现有Group/Filter逻辑）
             const snapshot = this.buildSnapshot(models);
             
             logger.info(`[ReactorCore] Quota for ${email}: ${models.length} models, ${snapshot.groups?.length ?? 0} groups`);
@@ -313,7 +313,7 @@ export class ReactorCore {
     }
 
     /**
-     * 发送 HTTP 请求
+     * Send HTTP Request
      */
     private async transmit<T>(endpoint: string, payload: object): Promise<T> {
         return new Promise((resolve, reject) => {
@@ -337,7 +337,7 @@ export class ReactorCore {
                 },
                 rejectUnauthorized: false,
                 timeout: TIMING.HTTP_TIMEOUT_MS,
-                agent: false, // 绕过代理，直接连接 localhost
+                agent: false, // 绕过代理，直接Connect localhost
             };
 
             logger.info(`Transmitting signal to ${endpoint}`, JSON.parse(data));
@@ -350,7 +350,7 @@ export class ReactorCore {
                         statusCode: res.statusCode,
                         bodyLength: body.length,
                     });
-                    // logger.debug('Signal Body:', body); // 取消注释以查看完整响应
+                    // logger.debug('Signal Body:', body); // Cancel注释以查看完整Response
 
                     // Check for empty body (often happens during process startup)
                     if (!body || body.trim().length === 0) {
@@ -385,43 +385,43 @@ export class ReactorCore {
     }
 
     /**
-     * 注册遥测数据更新回调
+     * Register遥测DataUpdateCallback
      */
     onTelemetry(cb: (data: QuotaSnapshot) => void): void {
         this.updateHandler = cb;
     }
 
     /**
-     * 注册故障回调
+     * Register故障Callback
      */
     onMalfunction(cb: (error: Error) => void): void {
         this.errorHandler = cb;
     }
 
     /**
-     * 启动定时同步
+     * StartScheduledSync
      */
     startReactor(interval: number): void {
         this.shutdown();
         this.currentInterval = interval;
         logger.info(`Reactor Pulse: ${interval}ms`);
 
-        // 启动时使用带重试的初始化同步，失败会自动重试
+        // Start时使用带Retry的InitializeSync，Failed会自动Retry
         this.initRetryToken += 1;
         const retryToken = this.initRetryToken;
         this.initWithRetry(3, 0, retryToken);
 
-        // 定时同步（失败不重试，等下一个周期自然重试）
+        // ScheduledSync（Failed不Retry，等下一个周期自然Retry）
         this.pulseTimer = setInterval(() => {
             this.syncTelemetry();
         }, interval);
     }
 
     /**
-     * 带重试的初始化同步
-     * 仅在启动时调用，失败会自动重试，用户无感
-     * @param maxRetries 最大重试次数
-     * @param currentRetry 当前重试次数
+     * 带Retry的InitializeSync
+     * 仅在Start时调用，Failed会自动Retry，User无感
+     * @param maxRetries 最大Retry次数
+     * @param currentRetry CurrentRetry次数
      */
     private async initWithRetry(
         maxRetries: number = 3,
@@ -450,7 +450,7 @@ export class ReactorCore {
                 return;
             }
             if (currentRetry < maxRetries) {
-                // 还有重试机会，使用指数退避
+                // 还有Retry机会，使用指数退避
                 const delay = 2000 * (currentRetry + 1);  // 2s, 4s, 6s
                 const sourceInfo = source ? `source=${source}` : 'source=unknown';
                 const endpointInfo = `endpoint=${endpoint}`;
@@ -460,12 +460,12 @@ export class ReactorCore {
                 return this.initWithRetry(maxRetries, currentRetry + 1, retryToken);
             }
             
-            // 超过最大重试次数，触发错误回调
+            // 超过最大Retry次数，触发ErrorCallback
             const sourceInfo = source ? `source=${source}` : 'source=unknown';
             const endpointInfo = `endpoint=${endpoint}`;
             logger.error(`Init sync failed after ${maxRetries} retries (${sourceInfo}, ${endpointInfo}): ${err.message}`);
             
-            // 服务端返回的错误不上报（如"未登录"），这不属于插件 Bug
+            // Service端Return的Error不上报（如"未登录"），这不属于Plugin Bug
             if (!isServerError(err)) {
                 captureError(err, {
                     phase: 'initSync',
@@ -487,7 +487,7 @@ export class ReactorCore {
     }
 
     /**
-     * 中断初始化重试流程
+     * 中断InitializeRetry流程
      */
     cancelInitRetry(): void {
         this.initRetryToken += 1;
@@ -513,14 +513,14 @@ export class ReactorCore {
     }
 
     /**
-     * 延迟指定毫秒数
+     * Delay指定毫秒数
      */
     private delay(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     /**
-     * 关闭反应堆
+     * Shutdown reactor
      */
     shutdown(): void {
         if (this.pulseTimer) {
@@ -530,7 +530,7 @@ export class ReactorCore {
     }
 
     /**
-     * 同步遥测数据（用于定时器调用，自带错误处理）
+     * Sync telemetryData（用于Scheduled器调用，自带ErrorHandle）
      */
     async syncTelemetry(): Promise<void> {
         try {
@@ -549,8 +549,8 @@ export class ReactorCore {
                 : API_ENDPOINTS.GET_USER_STATUS;
             logger.error(`Telemetry Sync Failed (${sourceInfo}, current=${currentSource}, endpoint=${endpoint}): ${err.message}`);
             
-            // 只有在从未成功获取过配额时才上报，成功后的定时同步失败不上报
-            // 服务端返回的错误不上报（如"未登录"），这不属于插件 Bug
+            // 只有在从未SuccessGet过Quota时才上报，Success后的ScheduledSyncFailed不上报
+            // Service端Return的Error不上报（如"未登录"），这不属于Plugin Bug
             if (!this.hasSuccessfulSync && !isServerError(err)) {
                 captureError(err, {
                     phase: 'telemetrySync',
@@ -570,14 +570,14 @@ export class ReactorCore {
     }
 
     /**
-     * 同步遥测数据核心逻辑（可抛出异常，用于重试机制）
+     * Sync telemetryData核心逻辑（可抛出异常，用于Retry机制）
      */
     private async syncTelemetryCore(): Promise<void> {
         const config = configService.getConfig();
         if (config.quotaSource === 'authorized') {
-            // 注意：移除了每次配额刷新时的自动账户切换逻辑
-            // 用户可以通过"切换至当前登录账户"按钮手动触发切换
-            // 这样可以避免用户手动切换账户后被自动覆盖回去的问题
+            // 注意：移除了每次QuotaRefresh时的自动账户Switch逻辑
+            // User可以通过"Switch至Current登录账户"Button手动触发Switch
+            // 这样可以避免User手动Switch账户后被自动覆盖回去的Issue
 
             try {
                 const hasAuth = await credentialStorage.hasValidCredential();
@@ -633,7 +633,7 @@ export class ReactorCore {
             }
         }
 
-        // Local 模式：优先尝试 state.vscdb 账户 + 远端 API，失败则兜底本地进程
+        // Local 模式：优先尝试 state.vscdb 账户 + 远端 API，Failed则兜底LocalProcess
         try {
             const telemetry = await this.fetchLocalTelemetryWithRemoteFallback();
             const rawEmail = telemetry.localAccountEmail
@@ -649,24 +649,24 @@ export class ReactorCore {
     }
 
     /**
-     * 获取本地配额数据，优先使用远端 API（自动导入 state.vscdb 账户）
-     * 如果远端 API 失败，兜底到本地进程 API
+     * GetLocalQuotaData，优先使用远端 API（自动Import state.vscdb 账户）
+     * 如果远端 API Failed，兜底到LocalProcess API
      */
     private async fetchLocalTelemetryWithRemoteFallback(): Promise<QuotaSnapshot> {
-        // 第一优先级：确保本地账户已导入，然后使用远端 API
+        // 第一优先级：确保Local账户已Import，然后使用远端 API
         try {
             const importResult = await ensureLocalCredentialImported();
             if (importResult) {
                 logger.info(`[LocalQuota] Using remote API with account: ${importResult.email}`);
                 
-                // 复用授权模式的逻辑获取配额
+                // 复用Authorization模式的逻辑GetQuota
                 const telemetry = await this.fetchAuthorizedTelemetry();
                 
                 this.localAccountEmail = importResult.email;
                 this.localUsingRemoteApi = true;
                 this.lastLocalFetchedAt = Date.now();
                 
-                // 添加本地账户信息到快照
+                // 添加Local账户Info到快照
                 telemetry.localAccountEmail = importResult.email;
                 return telemetry;
             }
@@ -675,7 +675,7 @@ export class ReactorCore {
             logger.warn(`[LocalQuota] Remote API failed, falling back to local process: ${err.message}`);
         }
 
-        // 第二优先级：兜底到本地进程 API
+        // 第二优先级：兜底到LocalProcess API
         logger.info('[LocalQuota] Using local process API');
         this.localUsingRemoteApi = false;
         this.localAccountEmail = undefined;
@@ -693,7 +693,7 @@ export class ReactorCore {
                 },
             },
         );
-        this.lastRawResponse = raw; // 缓存原始响应
+        this.lastRawResponse = raw; // CacheOriginalResponse
         this.lastLocalFetchedAt = Date.now();
         return this.decodeSignal(raw);
     }
@@ -750,7 +750,7 @@ export class ReactorCore {
     }
 
     /**
-     * 发布遥测数据到 UI
+     * 发布遥测Data到 UI
      */
     private publishTelemetry(telemetry: QuotaSnapshot, source?: 'local' | 'authorized'): void {
         if (source) {
@@ -778,26 +778,26 @@ export class ReactorCore {
             logger.info('Quota Update: No models available');
         }
 
-        // 标记已成功获取过配额数据，后续定时同步失败不再上报
+        // 标记SucceededGet过QuotaData，后续ScheduledSyncFailed不再上报
         this.hasSuccessfulSync = true;
 
         if (this.updateHandler) {
             this.updateHandler(telemetry);
         }
         
-        // 检查配额重置并触发自动唤醒（异步执行，不阻塞主流程）
-        // 注意：现在 checkQuotaResetTrigger 会自行获取每个选中账号的配额数据
+        // CheckQuotaReset并触发自动Wakeup（异步Execute，不阻塞主流程）
+        // 注意：现在 checkQuotaResetTrigger 会自行Get每个选中Account的QuotaData
         this.checkQuotaResetTrigger().catch(err => {
             logger.warn(`[ReactorCore] Wake on reset check failed: ${err}`);
         });
     }
 
     /**
-     * 获取授权配额并构建快照
-     * @param retryCount 当前重试次数，用于防止账号切换时的无限递归
+     * GetAuthorizationQuota并构建快照
+     * @param retryCount CurrentRetry次数，用于防止AccountSwitch时的无限递归
      */
     private async fetchAuthorizedTelemetry(retryCount = 0): Promise<QuotaSnapshot> {
-        // 防止账号频繁切换导致的无限递归
+        // 防止Account频繁Switch导致的无限递归
         const MAX_ACCOUNT_CHANGE_RETRIES = 3;
         if (retryCount >= MAX_ACCOUNT_CHANGE_RETRIES) {
             logger.warn('[AuthorizedQuota] Max account change retries reached, returning empty snapshot');
@@ -844,7 +844,7 @@ export class ReactorCore {
         if (this.normalizeAccount(activeAccount) !== this.normalizeAccount(activeAccountAfter)) {
             logger.info('[AuthorizedQuota] Active account changed during fetch, retrying with new account');
             this.lastAuthorizedModels = undefined;
-            // 递归重试，获取新账号的配额
+            // 递归Retry，Get新Account的Quota
             return this.fetchAuthorizedTelemetry(retryCount + 1);
         }
         this.lastAuthorizedModels = models;
@@ -882,7 +882,7 @@ export class ReactorCore {
 
             const remainingFraction = Math.min(1, Math.max(0, quotaInfo.remainingFraction ?? 0));
             
-            // 解析 resetTime，处理无效值的情况
+            // Parse resetTime，HandleInvalid值的情况
             let resetTime: Date;
             let resetTimeValid = true;
             if (quotaInfo.resetTime) {
@@ -890,7 +890,7 @@ export class ReactorCore {
                 if (!Number.isNaN(parsed.getTime())) {
                     resetTime = parsed;
                 } else {
-                    // 无效的 resetTime 字符串，使用 24 小时后作为备用
+                    // Invalid的 resetTime 字符串，使用 24 小时后作为备用
                     resetTime = new Date(now + 24 * 60 * 60 * 1000);
                     resetTimeValid = false;
                     logger.warn(`[AuthorizedQuota] Invalid resetTime for model ${modelKey}: ${quotaInfo.resetTime}`);
@@ -916,7 +916,7 @@ export class ReactorCore {
                 timeUntilReset,
                 timeUntilResetFormatted: resetTimeValid ? this.formatDelta(timeUntilReset) : (t('common.unknown') || 'Unknown'),
                 resetTimeValid,
-                // 模型能力字段
+                // Model能力字段
                 supportsImages: info.supportsImages,
                 isRecommended: info.recommended,
                 tagTitle: info.tagTitle,
@@ -928,16 +928,16 @@ export class ReactorCore {
         return models;
     }
     /**
-     * 检查配额重置并触发自动唤醒
-     * 现在 AutoTriggerController 会自行遍历所有选中账号并获取配额
+     * CheckQuotaReset并触发自动Wakeup
+     * 现在 AutoTriggerController 会自行遍历所有选中Account并GetQuota
      */
     private async checkQuotaResetTrigger(): Promise<void> {
         await autoTriggerController.checkAndTriggerOnQuotaReset();
     }
 
     /**
-     * 重新发布最近一次的遥测数据
-     * 用于在配置变更等不需要重新请求 API 的场景下更新 UI
+     * 重新发布最近一次的遥测Data
+     * 用于在Config变更等不需要重新Request API 的场景下Update UI
      */
     reprocess(): void {
         const quotaSource = configService.getConfig().quotaSource === 'authorized' ? 'authorized' : 'local';
@@ -961,20 +961,20 @@ export class ReactorCore {
             return;
         }
 
-        // 没有可用缓存，触发网络请求获取数据
+        // 没有可用Cache，触发网络RequestGetData
         logger.warn('Cannot reprocess: no cached data available, triggering sync');
         this.syncTelemetry();
     }
 
     /**
-     * 检查是否有缓存数据
+     * Check是否有CacheData
      */
     get hasCache(): boolean {
         return !!this.lastSnapshot;
     }
 
     /**
-     * 获取指定来源缓存的年龄（毫秒）
+     * Get指定来源Cache的年龄（毫秒）
      */
     getCacheAgeMs(source: 'local' | 'authorized'): number | undefined {
         const lastFetchedAt = source === 'local' ? this.lastLocalFetchedAt : this.lastAuthorizedFetchedAt;
@@ -985,7 +985,7 @@ export class ReactorCore {
     }
 
     /**
-     * 立即发布指定来源的缓存数据（不触发网络请求）
+     * 立即发布指定来源的CacheData（不触发网络Request）
      */
     publishCachedTelemetry(source: 'local' | 'authorized'): boolean {
         if (!this.updateHandler) {
@@ -1013,12 +1013,12 @@ export class ReactorCore {
     }
 
     /**
-     * 解码服务端响应
+     * 解码Service端Response
      */
     private decodeSignal(data: ServerUserStatusResponse): QuotaSnapshot {
-        // 验证响应数据结构
+        // ValidateResponseData结构
         if (!data || !data.userStatus) {
-            // 如果服务端返回了错误消息，直接透传给用户，这不属于插件 Bug
+            // 如果Service端Return了ErrorMessage，直接透传给User，这不属于Plugin Bug
             if (data && typeof data.message === 'string') {
                 throw new AntigravityError(t('error.serverError', { message: data.message }));
             }
@@ -1091,10 +1091,10 @@ export class ReactorCore {
         const configs: ClientModelConfig[] = status.cascadeModelConfigData?.clientModelConfigs || [];
         const modelSorts = status.cascadeModelConfigData?.clientModelSorts || [];
 
-        // 构建排序顺序映射（从 clientModelSorts 获取）
+        // 构建Sort顺序映射（从 clientModelSorts Get）
         const sortOrderMap = new Map<string, number>();
         if (modelSorts.length > 0) {
-            // 使用第一个排序配置（通常是 "Recommended"）
+            // 使用第一个SortConfig（通常是 "Recommended"）
             const primarySort = modelSorts[0];
             let index = 0;
             for (const group of primarySort.groups) {
@@ -1132,7 +1132,7 @@ export class ReactorCore {
                     timeUntilReset: delta,
                     timeUntilResetFormatted: resetTimeValid ? this.formatDelta(delta) : (t('common.unknown') || 'Unknown'),
                     resetTimeValid,
-                    // 模型能力字段
+                    // Model能力字段
                     supportsImages: m.supportsImages,
                     isRecommended: m.isRecommended,
                     tagTitle: m.tagTitle,
@@ -1140,24 +1140,24 @@ export class ReactorCore {
                 };
             });
 
-        // 排序：优先使用 clientModelSorts，否则按 label 字母排序
+        // Sort：优先使用 clientModelSorts，否则按 label 字母Sort
         models.sort((a, b) => {
             const indexA = sortOrderMap.get(a.label);
             const indexB = sortOrderMap.get(b.label);
 
-            // 两个都在排序列表中，按排序列表顺序
+            // 两个都在SortList中，按SortList顺序
             if (indexA !== undefined && indexB !== undefined) {
                 return indexA - indexB;
             }
-            // 只有 a 在排序列表中，a 排前面
+            // 只有 a 在SortList中，a 排前面
             if (indexA !== undefined) {
                 return -1;
             }
-            // 只有 b 在排序列表中，b 排前面
+            // 只有 b 在SortList中，b 排前面
             if (indexB !== undefined) {
                 return 1;
             }
-            // 都不在排序列表中，按 label 字母排序
+            // 都不在SortList中，按 label 字母Sort
             return a.label.localeCompare(b.label);
         });
 
@@ -1172,7 +1172,7 @@ export class ReactorCore {
         const config = configService.getConfig();
         const allModels = [...models];
 
-        // 首先过滤只保留推荐模型
+        // 首先Filter只保留推荐Model
         models = models.filter(model => this.getAuthorizedRecommendedRank(model) < Number.MAX_SAFE_INTEGER);
 
         const visibleModels = config.visibleModels ?? [];
@@ -1180,18 +1180,18 @@ export class ReactorCore {
             const visibleSet = new Set(visibleModels);
             const filteredModels = models.filter(model => visibleSet.has(model.modelId));
             
-            // 安全检查：如果过滤后为空但原始列表不为空，可能是配置问题
+            // 安全Check：如果Filter后为空但OriginalList不为空，可能是ConfigIssue
             if (filteredModels.length === 0 && models.length > 0) {
                 logger.warn('[buildSnapshot] Visible models filter resulted in empty list. ' +
                     `Original: ${models.length}, Visible config: ${visibleModels.length}. ` +
                     'Showing all recommended models instead.');
-                // 不应用 visibleModels 过滤，但保留推荐模型过滤
+                // 不应用 visibleModels Filter，但保留推荐ModelFilter
             } else {
                 models = filteredModels;
             }
         }
 
-        // 分组逻辑：使用存储的 groupMappings 进行分组
+        // Group逻辑：使用Storage的 groupMappings 进行Group
         let groups: QuotaGroup[] | undefined;
         
         if (config.groupingEnabled) {
@@ -1200,7 +1200,7 @@ export class ReactorCore {
             const hasSavedMappings = Object.keys(savedMappings).length > 0;
             
             if (hasSavedMappings) {
-                // 使用存储的分组映射
+                // 使用Storage的Group映射
                 for (const model of models) {
                     const groupId = savedMappings[model.modelId];
                     if (groupId) {
@@ -1209,22 +1209,22 @@ export class ReactorCore {
                         }
                         groupMap.get(groupId)!.push(model);
                     } else {
-                        // 新模型，单独一组（使用自己的 modelId 作为 groupId）
+                        // 新Model，单独一组（使用自己的 modelId 作为 groupId）
                         groupMap.set(model.modelId, [model]);
                     }
                 }
                 
-                // 自动分组检查：检查每个分组内模型的配额是否一致
-                // 如果不一致，只将不一致的模型移出分组（保留用户自定义设置）
+                // 自动GroupCheck：Check每个Group内Model的Quota是否一致
+                // 如果不一致，只将不一致的Model移出Group（保留UserCustomSet）
                 const modelsToRemove: string[] = [];
                 
                 for (const [groupId, groupModels] of groupMap) {
                     if (groupModels.length <= 1) {
-                        continue; // 单模型组无需检查
+                        continue; // 单Model组无需Check
                     }
                     
-                    // 检查组内所有模型的配额签名（remainingFraction + resetTime）是否一致
-                    // 使用多数派原则：找出最常见的配额签名，将不符合的模型移除
+                    // Check组内所有Model的Quota签名（remainingFraction + resetTime）是否一致
+                    // 使用多数派原则：找出最常见的Quota签名，将不符合的Model移除
                     const signatureCount = new Map<string, { count: number; fraction: number; resetTime: number }>();
                     
                     for (const model of groupModels) {
@@ -1248,7 +1248,7 @@ export class ReactorCore {
                         }
                     }
                     
-                    // 标记不符合多数派的模型移出分组
+                    // 标记不符合多数派的Model移出Group
                     for (const model of groupModels) {
                         const fraction = model.remainingFraction ?? 0;
                         const resetTime = model.resetTime.getTime();
@@ -1261,7 +1261,7 @@ export class ReactorCore {
                     }
                 }
                 
-                // 更新 groupMappings，移除不一致的模型
+                // Update groupMappings，移除不一致的Model
                 if (modelsToRemove.length > 0) {
                     const newMappings = { ...savedMappings };
                     for (const modelId of modelsToRemove) {
@@ -1272,21 +1272,21 @@ export class ReactorCore {
                         logger.warn(`Failed to save updated groupMappings: ${err}`);
                     });
                     
-                    // 从 groupMap 中移除这些模型，并为它们创建独立分组
+                    // 从 groupMap 中移除这些Model，并为它们Create独立Group
                     for (const modelId of modelsToRemove) {
-                        // 从原分组中移除
+                        // 从原Group中移除
                         for (const [_gid, gModels] of groupMap) {
                             const idx = gModels.findIndex(m => m.modelId === modelId);
                             if (idx !== -1) {
                                 const [removedModel] = gModels.splice(idx, 1);
-                                // 创建独立分组
+                                // Create独立Group
                                 groupMap.set(modelId, [removedModel]);
                                 break;
                             }
                         }
                     }
                     
-                    // 清理空的分组
+                    // 清理空的Group
                     for (const [gid, gModels] of groupMap) {
                         if (gModels.length === 0) {
                             groupMap.delete(gid);
@@ -1296,7 +1296,7 @@ export class ReactorCore {
                     logger.info(`[GroupCheck] Removed ${modelsToRemove.length} models from groups due to quota mismatch`);
                 }
             } else {
-                // 没有存储的映射，每个模型单独一组
+                // 没有Storage的映射，每个Model单独一组
                 for (const model of models) {
                     groupMap.set(model.modelId, [model]);
                 }
@@ -1307,11 +1307,11 @@ export class ReactorCore {
             let groupIndex = 1;
             
             for (const [groupId, groupModels] of groupMap) {
-                // 锚点共识：查找组内模型的自定义名称
+                // 锚点共识：查找组内Model的Custom名称
                 let groupName = '';
                 const customNames = config.groupingCustomNames;
                 
-                // 统计每个自定义名称的投票数
+                // 统计每个Custom名称的投票数
                 const nameVotes = new Map<string, number>();
                 for (const model of groupModels) {
                     const customName = customNames[model.modelId];
@@ -1320,7 +1320,7 @@ export class ReactorCore {
                     }
                 }
                 
-                // 选择投票数最多的名称
+                // Select投票数最多的名称
                 if (nameVotes.size > 0) {
                     let maxVotes = 0;
                     for (const [name, votes] of nameVotes) {
@@ -1331,7 +1331,7 @@ export class ReactorCore {
                     }
                 }
                 
-                // 如果没有自定义名称，使用默认名称
+                // 如果没有Custom名称，使用Default名称
                 if (!groupName) {
                     if (groupModels.length === 1) {
                         groupName = groupModels[0].label;
@@ -1341,7 +1341,7 @@ export class ReactorCore {
                 }
                 
                 const firstModel = groupModels[0];
-                // 计算组内所有模型的平均/最低配额
+                // 计算组内所有Model的平均/最低Quota
                 const minPercentage = Math.min(...groupModels.map(m => m.remainingPercentage ?? 0));
                 
                 groups.push({
@@ -1358,14 +1358,14 @@ export class ReactorCore {
                 groupIndex++;
             }
             
-            // 按组内模型在原始列表中的最小索引排序，保持相对顺序
+            // 按组内Model在OriginalList中的最小索引Sort，保持相对顺序
             const modelIndexMap = new Map<string, number>();
             models.forEach((m, i) => modelIndexMap.set(m.modelId, i));
 
             groups.sort((a, b) => {
-                // 获取 A 组中最靠前的模型索引
+                // Get A 组中最靠前的Model索引
                 const minIndexA = Math.min(...a.models.map(m => modelIndexMap.get(m.modelId) ?? 99999));
-                // 获取 B 组中最靠前的模型索引
+                // Get B 组中最靠前的Model索引
                 const minIndexB = Math.min(...b.models.map(m => modelIndexMap.get(m.modelId) ?? 99999));
                 return minIndexA - minIndexB;
             });
@@ -1373,7 +1373,7 @@ export class ReactorCore {
             logger.debug(`Grouping enabled: ${groups.length} groups created (saved mappings: ${hasSavedMappings})`);
         }
 
-        // 将配额中的模型常量传递给 AutoTriggerController，用于过滤可触发模型
+        // 将Quota中的Model常量传递给 AutoTriggerController，用于Filter可触发Model
         const quotaModelConstants = models.map(m => m.modelId);
         autoTriggerController.setQuotaModels(quotaModelConstants);
 
@@ -1446,7 +1446,7 @@ export class ReactorCore {
     }
 
     /**
-     * 格式化日期（自动国际化）
+     * FormatDate（自动i18n）
      */
     private formatIso(d: Date): string {
         const dateStr = d.toLocaleDateString(undefined, {
@@ -1463,10 +1463,10 @@ export class ReactorCore {
     }
 
     /**
-     * 格式化时间差
-     * - < 60分钟: 显示 Xm
-     * - < 24小时: 显示 Xh Ym
-     * - >= 24小时: 显示 Xd Yh Zm
+     * FormatTime差
+     * - < 60分钟: Show Xm
+     * - < 24小时: Show Xh Ym
+     * - >= 24小时: Show Xd Yh Zm
      */
     private formatDelta(ms: number): string {
         if (ms <= 0) {
@@ -1474,7 +1474,7 @@ export class ReactorCore {
         }
         const totalMinutes = Math.ceil(ms / 60000);
         
-        // 小于 60 分钟：只显示分钟
+        // 小于 60 分钟：只Show分钟
         if (totalMinutes < 60) {
             return `${totalMinutes}m`;
         }
@@ -1482,19 +1482,19 @@ export class ReactorCore {
         const totalHours = Math.floor(totalMinutes / 60);
         const remainingMinutes = totalMinutes % 60;
         
-        // 小于 24 小时：显示小时和分钟
+        // 小于 24 小时：Show小时和分钟
         if (totalHours < 24) {
             return `${totalHours}h ${remainingMinutes}m`;
         }
         
-        // >= 24 小时：显示天、小时、分钟
+        // >= 24 小时：Show天、小时、分钟
         const days = Math.floor(totalHours / 24);
         const remainingHours = totalHours % 24;
         return `${days}d ${remainingHours}h ${remainingMinutes}m`;
     }
 
     /**
-     * 创建离线状态的快照
+     * CreateOfflineState的快照
      */
     static createOfflineSnapshot(errorMessage?: string): QuotaSnapshot {
         return {
@@ -1506,11 +1506,11 @@ export class ReactorCore {
     }
 
     /**
-     * 根据当前配额信息计算分组映射
-     * 返回 modelId -> groupId 的映射
+     * 根据CurrentQuotaInfo计算Group映射
+     * Return modelId -> groupId 的映射
      */
     static calculateGroupMappings(models: ModelQuotaInfo[]): Record<string, string> {
-        // 1. 尝试按配额状态分组（旧逻辑）
+        // 1. 尝试按QuotaStateGroup（旧逻辑）
         const statsMap = new Map<string, string[]>();
         for (const model of models) {
             const fingerprint = `${model.remainingFraction?.toFixed(6)}_${model.resetTime.getTime()}`;
@@ -1520,14 +1520,14 @@ export class ReactorCore {
             statsMap.get(fingerprint)!.push(model.modelId);
         }
 
-        // 2. 检查是否所有模型都被分到了同一个大组
-        // 这通常发生在所有模型都是满血状态（或状态完全一致）时，此时按状态分组没有意义
+        // 2. Check是否所有Model都被分到了同一个大组
+        // 这通常发生在所有Model都是满血State（或State完全一致）时，此时按StateGroup没有意义
         if (statsMap.size === 1 && models.length > 1) {
             logger.info('Auto-grouping detected degenerate state (all models identical), falling back to ID-based fallback grouping.');
             return this.groupBasedOnSeries(models);
         }
         
-        // 3. 正常情况：使用配额指纹生成映射
+        // 3. 正常情况：使用Quota指纹生成映射
         const mappings: Record<string, string> = {};
         for (const [, modelIds] of statsMap) {
             const stableGroupId = modelIds.sort().join('_');
@@ -1540,12 +1540,12 @@ export class ReactorCore {
     }
 
     /**
-     * 基于模型ID的硬编码兜底分组逻辑
+     * 基于ModelID的硬编码兜底Group逻辑
      */
     private static groupBasedOnSeries(models: ModelQuotaInfo[]): Record<string, string> {
         const seriesMap = new Map<string, string[]>();
 
-        // 定义硬编码的分组规则
+        // 定义硬编码的Group规则
         const GROUPS = {
             GEMINI: ['MODEL_PLACEHOLDER_M8', 'MODEL_PLACEHOLDER_M7'],
             GEMINI_FLASH: ['MODEL_PLACEHOLDER_M18'],

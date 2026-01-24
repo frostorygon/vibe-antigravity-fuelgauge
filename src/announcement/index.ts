@@ -1,6 +1,6 @@
 /**
- * Antigravity Cockpit - Announcement Module
- * 公告模块入口
+ * Antigravity FuelGauge - Announcement Module
+ * Announcement Module入口
  */
 
 export * from './types';

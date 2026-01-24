@@ -2,7 +2,7 @@
  * English translations
  */
 export const en = {
-    // 状态栏
+    // State栏
     'statusBar.init': 'FuelGauge: Init...',
     'statusBar.connecting': 'FuelGauge: Connecting...',
     'statusBar.ready': 'FuelGauge: Ready',
@@ -44,7 +44,7 @@ export const en = {
     'profile.planDetails': 'Plan',
     'profile.togglePlan': 'Toggle Plan Details',
 
-    // 通知
+    // Notify
     'notify.refreshing': 'Refreshing quota data...',
     'notify.refreshed': 'Quota data refreshed',
     'notify.exhausted': '{model} quota exhausted! Resets in {time}',
@@ -52,7 +52,7 @@ export const en = {
     'notify.offline': 'FuelGauge: Systems offline. Could not detect Antigravity process.',
     'notify.bootFailed': 'FuelGauge: Boot failed',
 
-    // 帮助
+    // Help
     'help.startAntigravity': 'Start Antigravity',
     'help.retry': 'Retry Connection',
     'help.openLogs': 'Open Logs',

@@ -157,7 +157,7 @@ export class AccountsRefreshService {
             return;
         }
 
-        // 配额刷新不依赖 Cockpit Tools，只需要插件自身的凭证即可
+        // QuotaRefresh不依赖 Cockpit Tools，只需要Plugin自身的Credentials即可
 
         if (this.isRefreshingQuotas) {
             logger.debug('[AccountsRefresh] Quota refresh already in progress, skipping');

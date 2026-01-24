@@ -1,52 +1,52 @@
 /**
- * Antigravity Cockpit - 常量定义
- * 集中管理所有硬编码的魔法值
+ * Antigravity FuelGauge - Constants
+ * Centralized management of all hardcoded magic values
  */
 
-/** 配额健康度默认阈值 */
+/** Quota health default thresholds */
 export const QUOTA_THRESHOLDS = {
-    /** 健康状态阈值 (> 50%) */
+    /** Healthy state threshold (> 50%) */
     HEALTHY: 50,
-    /** 警告状态默认阈值 (> 30%) - 黄色 */
+    /** Warning state default threshold - yellow */
     WARNING_DEFAULT: 30,
-    /** 危险状态默认阈值 (<= 10%) - 红色 */
+    /** Critical state default threshold - red */
     CRITICAL_DEFAULT: 10,
 } as const;
 
-/** 反馈链接 (Removed in secure fork) */
+/** Feedback链接 (Removed in secure fork) */
 export const FEEDBACK_URL = '';
 
-/** 时间相关常量 (毫秒) */
+/** Time-related constants (milliseconds)) */
 export const TIMING = {
-    /** 默认刷新间隔 */
+    /** Default refresh interval */
     DEFAULT_REFRESH_INTERVAL_MS: 120000,
-    /** 进程扫描重试间隔 */
+    /** Process scan retry interval */
     PROCESS_SCAN_RETRY_MS: 100,
-    /** HTTP 请求超时（10秒，兼容 WSL2 等慢环境） */
+    /** HTTP request timeout (10s, compatible with slow environments like WSL2) */
     HTTP_TIMEOUT_MS: 10000,
-    /** 进程命令执行超时（增加到 15000ms 以兼容某些 Windows 环境下 PowerShell 的冷启动） */
+    /** Process command timeout (15000ms for PowerShell cold start on some Windows systems) */
     PROCESS_CMD_TIMEOUT_MS: 15000,
-    /** 刷新冷却时间 (秒) */
+    /** Refresh cooldown (seconds)) */
     REFRESH_COOLDOWN_SECONDS: 60,
-    /** 运行时同步连续失败最大重试次数 */
+    /** Max consecutive retry count for runtime sync failures */
     MAX_CONSECUTIVE_RETRY: 5,
 } as const;
 
-/** UI 相关常量 */
+/** UI-related constants */
 export const UI = {
-    /** 状态栏优先级 */
+    /** Status bar priority */
     STATUS_BAR_PRIORITY: 100,
-    /** 卡片最小宽度 */
+    /** Card minimum width */
     CARD_MIN_WIDTH: 280,
 } as const;
 
-/** 端点路径 */
+/** API endpoint paths */
 export const API_ENDPOINTS = {
     GET_USER_STATUS: '/exa.language_server_pb.LanguageServerService/GetUserStatus',
     GET_UNLEASH_DATA: '/exa.language_server_pb.LanguageServerService/GetUnleashData',
 } as const;
 
-/** 目标进程名称映射 */
+/** Target process name mapping */
 export const PROCESS_NAMES = {
     windows: 'language_server_windows_x64.exe',
     darwin_arm: 'language_server_macos_arm',
@@ -54,7 +54,7 @@ export const PROCESS_NAMES = {
     linux: 'language_server_linux',
 } as const;
 
-/** 配置键名 */
+/** Config key names */
 export const CONFIG_KEYS = {
     REFRESH_INTERVAL: 'refreshInterval',
     SHOW_PROMPT_CREDITS: 'showPromptCredits',
@@ -80,23 +80,23 @@ export const CONFIG_KEYS = {
     LANGUAGE: 'language',
 } as const;
 
-/** 状态栏显示格式 */
+/** Status bar display formats */
 export const STATUS_BAR_FORMAT = {
-    /** 仅图标模式：只显示🚀 */
+    /** Icon only mode: shows only🚀 */
     ICON: 'icon',
-    /** 仅状态球模式：只显示 🟢🟡🔴 */
+    /** Dot only mode: shows only 🟢🟡🔴 */
     DOT: 'dot',
-    /** 仅数字模式：只显示百分比 */
+    /** Percent only mode: shows percentage only */
     PERCENT: 'percent',
-    /** 紧凑模式：状态球 + 百分比 */
+    /** Compact mode: dot + percentage */
     COMPACT: 'compact',
-    /** 名称+数字模式：模型名 + 百分比（无状态球） */
+    /** Name+percent mode: model name + percentage (no dot) */
     NAME_PERCENT: 'namePercent',
-    /** 完整模式：状态球 + 模型名 + 百分比（默认） */
+    /** Standard mode: dot + model name + percentage (default) */
     STANDARD: 'standard',
 } as const;
 
-/** 日志级别 */
+/** Log levels */
 export const LOG_LEVELS = {
     DEBUG: 'debug',
     INFO: 'info',
@@ -104,10 +104,10 @@ export const LOG_LEVELS = {
     ERROR: 'error',
 } as const;
 
-/** 显示模式 */
+/** Display modes */
 export const DISPLAY_MODE = {
-    /** Webview 面板（默认） */
+    /** Webview panel (default) */
     WEBVIEW: 'webview',
-    /** QuickPick 菜单（兼容模式） */
+    /** QuickPick menu (compatibility mode) */
     QUICKPICK: 'quickpick',
 } as const;

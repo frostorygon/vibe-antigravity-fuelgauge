@@ -1,7 +1,7 @@
 import * as os from 'os';
 import * as path from 'path';
 import * as fs from 'fs';
-// 使用 sql.js 的纯 JavaScript 版本（不需要 .wasm 文件）
+// 使用 sql.js 的纯 JavaScript Version（不需要 .wasm 文件）
 import initSqlJs, { Database } from 'sql.js/dist/sql-asm.js';
 import { credentialStorage } from './credential_storage';
 import { oauthService } from './oauth_service';
@@ -10,12 +10,12 @@ import { logger } from '../shared/log_service';
 
 const STATE_KEY = 'jetskiStateSync.agentManagerInitState';
 
-// sql.js 初始化缓存
+// sql.js InitializeCache
 let sqlJsPromise: ReturnType<typeof initSqlJs> | null = null;
 
 async function getSqlJs(): Promise<Awaited<ReturnType<typeof initSqlJs>>> {
     if (!sqlJsPromise) {
-        // 纯 JavaScript 版本不需要加载 .wasm 文件
+        // 纯 JavaScript Version不需要Load .wasm 文件
         sqlJsPromise = initSqlJs();
     }
     return sqlJsPromise;
@@ -57,7 +57,7 @@ function getAntigravityStateDbPath(): string {
 }
 
 async function readStateValue(dbPath: string): Promise<string> {
-    // 检查数据库文件是否存在
+    // CheckData库文件是否存在
     if (!fs.existsSync(dbPath)) {
         throw new Error(`Database file not found: ${dbPath}`);
     }
@@ -222,7 +222,7 @@ export async function previewLocalCredential(
     );
 
     if (!credential.email) {
-        throw new Error('无法确定账号邮箱');
+        throw new Error('无法确定AccountEmail');
     }
 
     pendingLocalCredential = {
@@ -256,7 +256,7 @@ export async function commitLocalCredential(
     }
 
     if (!credential.email) {
-        throw new Error('无法确定账号邮箱');
+        throw new Error('无法确定AccountEmail');
     }
 
     const existed = await credentialStorage.hasAccount(credential.email);
@@ -277,14 +277,14 @@ export async function importLocalCredential(fallbackEmail?: string): Promise<{ e
 }
 
 /**
- * 确保本地 Antigravity 账户已导入到 credentialStorage
- * 用于 local 配额模式下通过远端 API 获取配额数据
- * - 如果 credentialStorage 已有有效凭证，直接返回当前账户邮箱
- * - 如果没有，尝试从 state.vscdb 读取并保存到 credentialStorage
- * @returns 账户邮箱或 null
+ * 确保Local Antigravity 账户已Import到 credentialStorage
+ * 用于 local Quota模式下通过远端 API GetQuotaData
+ * - 如果 credentialStorage 已有ValidCredentials，直接ReturnCurrent账户Email
+ * - 如果没有，尝试从 state.vscdb 读取并Save到 credentialStorage
+ * @returns 账户Email或 null
  */
 export async function ensureLocalCredentialImported(): Promise<{ email: string } | null> {
-    // 首先检查是否已有有效凭证
+    // 首先Check是否已有ValidCredentials
     const hasValid = await credentialStorage.hasValidCredential();
     if (hasValid) {
         const activeEmail = await credentialStorage.getActiveAccount();
@@ -294,7 +294,7 @@ export async function ensureLocalCredentialImported(): Promise<{ email: string }
         }
     }
 
-    // 没有有效凭证，尝试从 state.vscdb 导入
+    // 没有ValidCredentials，尝试从 state.vscdb Import
     try {
         const tokenInfo = await readLocalTokenInfo();
         if (!tokenInfo.refreshToken) {
@@ -312,7 +312,7 @@ export async function ensureLocalCredentialImported(): Promise<{ email: string }
             return null;
         }
 
-        // 保存到 credentialStorage（自动导入）
+        // Save到 credentialStorage（自动Import）
         await credentialStorage.saveCredential(credential);
         logger.info(`[LocalAuth] Auto-imported credential for ${credential.email}`);
         return { email: credential.email };

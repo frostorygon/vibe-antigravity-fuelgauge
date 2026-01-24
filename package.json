@@ -3,7 +3,7 @@
   "displayName": "Antigravity FuelGauge",
   "icon": "assets/icon.png",
   "description": "A secure, self-hosted quota fuel gauge for Antigravity AI.",
-  "version": "2.0.6",
+  "version": "2.1.0",
   "publisher": "self-hosted",
   "engines": {
     "vscode": "^1.90.0"
@@ -21,7 +21,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/jlcodes99/vscode-antigravity-fuelgauge.git"
+    "url": "https://github.com/self-hosted/vscode-antigravity-fuelgauge.git"
   },
   "activationEvents": [
     "onStartupFinished"

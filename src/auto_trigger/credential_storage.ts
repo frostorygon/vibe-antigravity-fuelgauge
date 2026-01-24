@@ -1,7 +1,7 @@
 /**
- * Antigravity Cockpit - Credential Storage
- * OAuth 凭证的安全存储服务
- * 使用 VS Code 的 SecretStorage API 安全存储敏感信息
+ * Antigravity FuelGauge - Credential Storage
+ * OAuth Credentials的安全StorageService
+ * 使用 VS Code 的 SecretStorage API 安全Storage敏感Info
  * 
  * Supports multiple accounts with active account selection
  */
@@ -23,8 +23,8 @@ interface CredentialsStorage {
 }
 
 /**
- * 凭证存储服务
- * 单例模式，通过 initialize() 初始化
+ * Credential StorageService
+ * 单例模式，通过 initialize() Initialize
  * Supports multiple accounts
  */
 class CredentialStorage {
@@ -33,8 +33,8 @@ class CredentialStorage {
     private initialized = false;
 
     /**
-     * 初始化存储服务
-     * @param context VS Code 扩展上下文
+     * InitializeStorageService
+     * @param context VS Code Extension上下文
      */
     initialize(context: vscode.ExtensionContext): void {
         this.secretStorage = context.secrets;
@@ -44,7 +44,7 @@ class CredentialStorage {
     }
 
     /**
-     * 检查是否已初始化
+     * Check是否已Initialize
      */
     private ensureInitialized(): void {
         if (!this.initialized || !this.secretStorage || !this.globalState) {
@@ -173,7 +173,7 @@ class CredentialStorage {
     }
 
     /**
-     * 与远程账号列表同步（删除本地多余的账号）
+     * 与RemoteAccountListSync（DeleteLocal多余的Account）
      */
     async syncWithRemoteAccountList(remoteEmails: string[]): Promise<void> {
         const storage = await this.getCredentialsStorage();
@@ -220,7 +220,7 @@ class CredentialStorage {
     }
 
     /**
-     * 获取 Cockpit Tools 账号快照（用于同步判定）
+     * Get Cockpit Tools Account快照（用于Sync判定）
      */
     getToolsAccountSnapshot(): string[] {
         this.ensureInitialized();
@@ -228,7 +228,7 @@ class CredentialStorage {
     }
 
     /**
-     * 保存 Cockpit Tools 账号快照
+     * Save Cockpit Tools Account快照
      */
     async setToolsAccountSnapshot(emails: string[]): Promise<void> {
         this.ensureInitialized();
@@ -271,7 +271,7 @@ class CredentialStorage {
     // ============ Legacy Compatibility Methods (Deprecated but kept for interface/migration safety) ============
 
     /**
-     * 保存 OAuth 凭证 (Legacy - saves to active account or first account)
+     * Save OAuth Credentials (Legacy - saves to active account or first account)
      * @deprecated Use saveCredentialForAccount instead
      */
     async saveCredential(credential: OAuthCredential): Promise<void> {
@@ -293,7 +293,7 @@ class CredentialStorage {
     }
 
     /**
-     * 获取 OAuth 凭证 (Returns active account's credential)
+     * Get OAuth Credentials (Returns active account's credential)
      */
     async getCredential(): Promise<OAuthCredential | null> {
         const activeAccount = await this.getActiveAccount();
@@ -313,7 +313,7 @@ class CredentialStorage {
     }
 
     /**
-     * 删除 OAuth 凭证 (Deletes all accounts)
+     * Delete OAuth Credentials (Deletes all accounts)
      */
     async deleteCredential(): Promise<void> {
         this.ensureInitialized();
@@ -329,7 +329,7 @@ class CredentialStorage {
     }
 
     /**
-     * 检查是否有有效凭证
+     * Check是否有ValidCredentials
      */
     async hasValidCredential(): Promise<boolean> {
         const credential = await this.getCredential();
@@ -337,7 +337,7 @@ class CredentialStorage {
             return false;
         }
 
-        // 检查是否有 refresh_token（有 refresh_token 就可以刷新 access_token）
+        // Check是否有 refresh_token（有 refresh_token 就可以Refresh access_token）
         if (!credential.refreshToken) {
             return false;
         }
@@ -346,7 +346,7 @@ class CredentialStorage {
     }
 
     /**
-     * 获取授权状态 (includes all accounts)
+     * GetAuthorizationState (includes all accounts)
      */
     async getAuthorizationStatus(): Promise<AuthorizationStatus> {
         const credential = await this.getCredential();
@@ -371,7 +371,7 @@ class CredentialStorage {
     }
 
     /**
-     * 更新 access_token（刷新后调用）
+     * Update access_token（Refresh后调用）
      */
     async updateAccessToken(accessToken: string, expiresAt: string): Promise<void> {
         const activeAccount = await this.getActiveAccount();
@@ -395,7 +395,7 @@ class CredentialStorage {
     }
 
     /**
-     * 更新指定账号的 access_token（多账号）
+     * Update指定Account的 access_token（多Account）
      */
     async updateAccessTokenForAccount(email: string, accessToken: string, expiresAt: string): Promise<void> {
         const credential = await this.getCredentialForAccount(email);
@@ -414,7 +414,7 @@ class CredentialStorage {
     }
 
     /**
-     * 更新指定账号的 projectId
+     * Update指定Account的 projectId
      */
     async updateProjectIdForAccount(email: string, projectId: string): Promise<void> {
         const credential = await this.getCredentialForAccount(email);

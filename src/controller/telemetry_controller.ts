@@ -18,7 +18,7 @@ export class TelemetryController {
     private notifiedModels: Set<string> = new Set();
     private lastSuccessfulUpdate: Date | null = null;
     private consecutiveFailures: number = 0;
-    private antigravityToolsAutoSynced: boolean = false;  // 避免重复执行自动同步
+    private antigravityToolsAutoSynced: boolean = false;  // 避免重复Execute自动Sync
 
     constructor(
         private reactor: ReactorCore,
@@ -38,17 +38,17 @@ export class TelemetryController {
         this.reactor.onTelemetry(async (snapshot: QuotaSnapshot) => {
             let config = configService.getConfig();
 
-            // 记录最后成功更新时间
+            // Record最后SuccessUpdateTime
             this.lastSuccessfulUpdate = new Date();
-            this.consecutiveFailures = 0; // 重置连续失败计数
+            this.consecutiveFailures = 0; // Reset连续Failed计数
 
-            // 成功获取数据，重置错误状态
+            // SuccessGetData，ResetErrorState
             this.statusBar.reset();
 
-            // 检查配额并发送通知
+            // CheckQuota并SendNotify
             this.checkAndNotifyQuota(snapshot, config);
 
-            // 首次安装分组默认启用时，自动生成分组映射并重新渲染
+            // 首次InstallGroupDefaultEnable时，自动生成Group映射并重新Render
             if (config.groupingEnabled && Object.keys(config.groupMappings).length === 0 && snapshot.models.length > 0) {
                 const newMappings = ReactorCore.calculateGroupMappings(snapshot.models);
                 await configService.updateGroupMappings(newMappings);
@@ -57,16 +57,16 @@ export class TelemetryController {
                 return;
             }
 
-            // 自动将新分组添加到 pinnedGroups（第一次开启分组时默认全部显示在状态栏）
+            // 自动将新Group添加到 pinnedGroups（第一次开启Group时Default全部Show在State栏）
             if (config.groupingEnabled && snapshot.groups && snapshot.groups.length > 0) {
                 const currentPinnedGroups = config.pinnedGroups;
                 const allGroupIds = snapshot.groups.map(g => g.groupId);
 
-                // 如果 pinnedGroups 为空，说明是第一次开启分组，自动 pin 全部
+                // 如果 pinnedGroups 为空，说明是第一次开启Group，自动 pin 全部
                 if (currentPinnedGroups.length === 0) {
                     logger.info(`Auto-pinning all ${allGroupIds.length} groups to status bar`);
                     await configService.updateConfig('pinnedGroups', allGroupIds);
-                    // 重新获取配置
+                    // 重新GetConfig
                     config = configService.getConfig();
                 }
             }
@@ -74,7 +74,7 @@ export class TelemetryController {
             const authorizationStatus = await credentialStorage.getAuthorizationStatus();
             const authorizedAvailable = authorizationStatus.isAuthorized;
 
-            // 更新 Dashboard（使用可能已更新的 config）
+            // Update Dashboard（使用可能已Update的 config）
             this.hud.refreshView(snapshot, {
                 showPromptCredits: config.showPromptCredits,
                 pinnedModels: config.pinnedModels,
@@ -104,13 +104,13 @@ export class TelemetryController {
                 antigravityToolsAutoSwitchEnabled: configService.getStateFlag('antigravityToolsAutoSwitchEnabled', true),
             });
 
-            // 更新 QuickPick 视图数据
+            // Update QuickPick ViewData
             this.quickPickView.updateSnapshot(snapshot);
 
-            // 更新状态栏
+            // UpdateState栏
             this.statusBar.update(snapshot, config);
 
-            // 同步刷新公告状态（让面板打开时能自动接收新公告弹框）
+            // SyncRefreshAnnouncementState（让PanelOpen时能自动Receive新AnnouncementModal）
             try {
                 const annState = await announcementService.getState();
                 this.hud.sendMessage({
@@ -118,11 +118,11 @@ export class TelemetryController {
                     data: annState,
                 });
             } catch (error) {
-                // 公告刷新失败不影响主流程
+                // AnnouncementRefreshFailed不影响主流程
                 logger.debug(`[TelemetryController] Announcement refresh failed: ${error}`);
             }
 
-            // 自动同步 Antigravity Tools 账户（仅执行一次）
+            // 自动Sync Antigravity Tools 账户（仅Execute一次）
             if (!this.antigravityToolsAutoSynced && configService.getStateFlag('antigravityToolsSyncEnabled', false)) {
                 this.antigravityToolsAutoSynced = true;
                 this.performAutoSync().catch(err => {
@@ -136,18 +136,18 @@ export class TelemetryController {
             const sourceInfo = source ? ` (source=${source})` : '';
             logger.error(`Reactor Malfunction${sourceInfo}: ${err.message}`);
 
-            // 如果是连接被拒绝（ECONNREFUSED），说明端口可能变了，或者信号中断/损坏，直接重新扫描
+            // 如果是Connect被拒绝（ECONNREFUSED），说明Port可能变了，或者信号中断/损坏，直接重新Scan
             if (err.message.includes('ECONNREFUSED') || 
                 err.message.includes('Signal Lost') || 
                 err.message.includes('Signal Corrupted')) {
                 
-                // 增加连续失败计数
+                // 增加连续Failed计数
                 this.consecutiveFailures++;
                 
-                // 如果连续失败次数没超过阈值，尝试自动重连
+                // 如果连续Failed次数没超过Threshold，尝试自动重连
                 if (this.consecutiveFailures <= TIMING.MAX_CONSECUTIVE_RETRY) {
                     logger.warn(`Connection issue detected (attempt ${this.consecutiveFailures}/${TIMING.MAX_CONSECUTIVE_RETRY}), initiating immediate re-scan protocol...`);
-                    // 立即尝试重新启动系统（重新扫描端口）
+                    // 立即尝试重新Boot systems（重新ScanPort）
                     await this.onRetry();
                     return;
                 } else {
@@ -158,7 +158,7 @@ export class TelemetryController {
 
             this.statusBar.setError(err.message);
 
-            // 显示系统弹框
+            // Show system dialog
             vscode.window.showErrorMessage(
                 `${t('notify.bootFailed')}: ${err.message}`,
                 t('help.retry'),
@@ -188,14 +188,14 @@ export class TelemetryController {
                 const keyBase = `group:${group.groupId}`;
                 const notifyKey = `${keyBase}-${pct <= criticalThreshold ? 'critical' : 'warning'}`;
 
-                // 如果已经通知过这个状态，跳过
+                // 如果已经Notify过这个State，Skip
                 if (this.notifiedModels.has(notifyKey)) {
                     continue;
                 }
 
-                // 危险阈值通知（红色）
+                // 危险ThresholdNotify（红色）
                 if (pct <= criticalThreshold && pct > 0) {
-                    // 清除之前的 warning 通知记录（如果有）
+                    // 清除之前的 warning NotifyRecord（如果有）
                     this.notifiedModels.delete(`${keyBase}-warning`);
                     this.notifiedModels.add(notifyKey);
 
@@ -209,7 +209,7 @@ export class TelemetryController {
                     });
                     logger.info(`Critical threshold notification sent for ${group.groupName}: ${pct}%`);
                 }
-                // 警告阈值通知（黄色）
+                // WarningThresholdNotify（黄色）
                 else if (pct <= warningThreshold && pct > criticalThreshold) {
                     this.notifiedModels.add(notifyKey);
 
@@ -218,7 +218,7 @@ export class TelemetryController {
                     );
                     logger.info(`Warning threshold notification sent for ${group.groupName}: ${pct}%`);
                 }
-                // 配额恢复时清除通知记录
+                // QuotaResume时清除NotifyRecord
                 else if (pct > warningThreshold) {
                     this.notifiedModels.delete(`${keyBase}-warning`);
                     this.notifiedModels.delete(`${keyBase}-critical`);
@@ -231,14 +231,14 @@ export class TelemetryController {
             const pct = model.remainingPercentage ?? 0;
             const notifyKey = `${model.modelId}-${pct <= criticalThreshold ? 'critical' : 'warning'}`;
 
-            // 如果已经通知过这个状态，跳过
+            // 如果已经Notify过这个State，Skip
             if (this.notifiedModels.has(notifyKey)) {
                 continue;
             }
 
-            // 危险阈值通知（红色）
+            // 危险ThresholdNotify（红色）
             if (pct <= criticalThreshold && pct > 0) {
-                // 清除之前的 warning 通知记录（如果有）
+                // 清除之前的 warning NotifyRecord（如果有）
                 this.notifiedModels.delete(`${model.modelId}-warning`);
                 this.notifiedModels.add(notifyKey);
 
@@ -252,7 +252,7 @@ export class TelemetryController {
                 });
                 logger.info(`Critical threshold notification sent for ${model.label}: ${pct}%`);
             }
-            // 警告阈值通知（黄色）
+            // WarningThresholdNotify（黄色）
             else if (pct <= warningThreshold && pct > criticalThreshold) {
                 this.notifiedModels.add(notifyKey);
 
@@ -261,7 +261,7 @@ export class TelemetryController {
                 );
                 logger.info(`Warning threshold notification sent for ${model.label}: ${pct}%`);
             }
-            // 配额恢复时清除通知记录
+            // QuotaResume时清除NotifyRecord
             else if (pct > warningThreshold) {
                 this.notifiedModels.delete(`${model.modelId}-warning`);
                 this.notifiedModels.delete(`${model.modelId}-critical`);
@@ -270,7 +270,7 @@ export class TelemetryController {
     }
 
     /**
-     * 后台自动同步 Antigravity Tools 账户（仅导入，不切换）
+     * 后台自动Sync Antigravity Tools 账户（仅Import，不Switch）
      */
     private async performAutoSync(): Promise<void> {
         try {
@@ -280,15 +280,15 @@ export class TelemetryController {
             }
             const detection = await antigravityToolsSyncService.detect();
 
-            // 未检测到 AntigravityTools 数据，静默跳过
+            // 未检测到 AntigravityTools Data，静默Skip
             if (!detection || !detection.currentEmail) {
                 return;
             }
 
-            // 只导入新账户，不切换（账户切换由本地客户端同步逻辑控制）
+            // 只Import新账户，不Switch（账户Switch由LocalClientSync逻辑控制）
             if (detection.newEmails.length > 0) {
                 if (this.hud.isVisible()) {
-                    // 面板可见，发送弹框消息（autoConfirmImportOnly=true 只导入不切换）
+                    // PanelVisible，SendModalMessage（autoConfirmImportOnly=true 只Import不Switch）
                     this.hud.sendMessage({
                         type: 'antigravityToolsSyncPrompt',
                         data: {
@@ -297,25 +297,25 @@ export class TelemetryController {
                             currentEmail: detection.currentEmail,
                             sameAccount: false,
                             autoConfirm: true,
-                            autoConfirmImportOnly: true, // 始终只导入，不切换
+                            autoConfirmImportOnly: true, // 始终只Import，不Switch
                         },
                     });
                 } else {
-                    // 面板不可见，静默导入（importOnly=true 只导入不切换）
+                    // Panel不Visible，静默Import（importOnly=true 只Import不Switch）
                     const activeEmail = await credentialStorage.getActiveAccount();
                     await antigravityToolsSyncService.importAndSwitch(activeEmail, true);
-                    // 刷新状态
+                    // RefreshState
                     const state = await autoTriggerController.getState();
                     this.hud.sendMessage({ type: 'autoTriggerState', data: state });
                     this.hud.sendMessage({ type: 'antigravityToolsSyncComplete', data: { success: true } });
                     vscode.window.showInformationMessage(
                         t('antigravityToolsSync.autoImported', { email: detection.currentEmail }) 
-                        || `已自动导入账户: ${detection.currentEmail}`,
+                        || `已自动Import账户: ${detection.currentEmail}`,
                     );
                     logger.info(`AntigravityTools Sync: Auto-imported ${detection.newEmails.join(', ')} (no switch)`);
                 }
             }
-            // 不再自动切换账户，账户切换完全由本地客户端同步逻辑控制
+            // 不再自动Switch账户，账户Switch完全由LocalClientSync逻辑控制
         } catch (error: unknown) {
             const err = error instanceof Error ? error.message : String(error);
             logger.warn(`AntigravityTools Sync auto-sync failed: ${err}`);

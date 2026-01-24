@@ -1,12 +1,12 @@
 /**
- * Antigravity Cockpit - Shared Authentication UI
- * 用于统一 Dashboard 和 Auto Trigger 两个视图的账号授权和同步配置 UI
+ * Antigravity FuelGauge - Shared Authentication UI
+ * 用于统一 Dashboard 和 Auto Trigger 两个View的AccountAuthorization和SyncConfig UI
  */
 
 (function () {
     'use strict';
 
-    // 国际化辅助
+    // i18n辅助
     const i18n = window.__i18n || {};
     const t = (key) => i18n[key] || key;
 
@@ -32,10 +32,10 @@
         }
 
         /**
-         * 渲染授权行 (Auth Row)
-         * @param {HTMLElement} container 容器元素
-         * @param {Object} options 配置项
-         * @param {boolean} options.showSyncToggleInline 是否内联显示同步开关（否则显示配置按钮）
+         * RenderAuthorization行 (Auth Row)
+         * @param {HTMLElement} container ContainerElement
+         * @param {Object} options Config项
+         * @param {boolean} options.showSyncToggleInline 是否内联ShowSync开关（否则ShowConfigButton）
          */
         renderAuthRow(container, options = {}) {
             if (!container) return;
@@ -47,7 +47,7 @@
             const activeEmail = activeAccount || (hasAccounts ? accounts[0].email : null);
             const isAuthorized = authorization?.isAuthorized || hasAccounts;
 
-            // Common Buttons - 账号总览按钮
+            // Common Buttons - Accounts OverviewButton
             const overviewBtn = `<button class="quota-account-overview-btn" title="${t('accountsOverview.openBtn') || 'Accounts Overview'}">📊 ${t('accountsOverview.openBtn') || 'Accounts Overview'}</button>`;
 
             // Sync UI Elements
@@ -65,8 +65,8 @@
             } else {
                 // Compact Style (Like Dashboard Tab)
                 syncActionsHtml = `
-                    <button class="at-btn at-btn-primary at-sync-config-btn" title="${t('atSyncConfig.title') || '账号同步配置'}">
-                        ⚙ ${t('atSyncConfig.btnText') || '账号同步配置'}
+                    <button class="at-btn at-btn-primary at-sync-config-btn" title="${t('atSyncConfig.title') || 'AccountSyncConfig'}">
+                        ⚙ ${t('atSyncConfig.btnText') || 'AccountSyncConfig'}
                     </button>
                 `;
             }
@@ -77,7 +77,7 @@
                     ? `<span class="account-count-badge" title="${t('autoTrigger.manageAccounts')}">+${extraCount}</span>`
                     : '';
 
-                // 切换至当前登录账户按钮 - 使用和"管理账号"相同的样式
+                // Switch至Current登录账户Button - 使用和"管理Account"相同的Style
                 const switchToClientBtn = `<button class="quota-account-manage-btn at-switch-to-client-btn" title="${t('autoTrigger.switchToClientAccount')}">${t('autoTrigger.switchToClientAccount')}</button>`;
 
                 container.innerHTML = `
@@ -146,7 +146,7 @@
                 postMessage({ command: 'antigravityToolsSync.import' });
             });
 
-            // Switch to Client Account - 切换至当前登录账户
+            // Switch to Client Account - Switch至Current登录账户
             container.querySelector('.at-switch-to-client-btn')?.addEventListener('click', (e) => {
                 e.stopPropagation();
                 postMessage({ command: 'antigravityToolsSync.switchToClient' });
@@ -167,8 +167,8 @@
                             <button class="close-btn" id="close-account-manage-modal">×</button>
                         </div>
                         <div class="modal-hint" style="padding: 8px 16px; font-size: 12px; color: var(--text-muted); background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
-                            <span style="margin-right: 12px;">💡 ${t('autoTrigger.manageAccountsHintClick') || '点击邮箱可切换查看配额'}</span>
-                            <span>🔄 ${t('autoTrigger.manageAccountsHintSwitch') || '点击"切换登录"可切换客户端登录账户'}</span>
+                            <span style="margin-right: 12px;">💡 ${t('autoTrigger.manageAccountsHintClick') || '点击Email可Switch查看Quota'}</span>
+                            <span>🔄 ${t('autoTrigger.manageAccountsHintSwitch') || '点击"Switch登录"可SwitchClient登录账户'}</span>
                         </div>
                         <div class="modal-body" id="account-manage-body"></div>
                         <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
@@ -211,8 +211,8 @@
                     isInvalid ? `<span class="account-manage-badge expired">${t('autoTrigger.tokenExpired')}</span>` : ''
                 ].join('');
 
-                // 切换登录按钮（所有账号都显示）
-                const switchLoginBtn = `<button class="at-btn at-btn-small at-btn-primary account-switch-login-btn" data-email="${acc.email}">${t('autoTrigger.switchLoginBtn') || '切换登录'}</button>`;
+                // Switch登录Button（所有Account都Show）
+                const switchLoginBtn = `<button class="at-btn at-btn-small at-btn-primary account-switch-login-btn" data-email="${acc.email}">${t('autoTrigger.switchLoginBtn') || 'Switch登录'}</button>`;
 
                 return `
                     <div class="account-manage-item ${isActive ? 'active' : ''} ${isInvalid ? 'expired' : ''}" data-email="${acc.email}">
@@ -223,13 +223,13 @@
                         </div>
                         <div class="account-manage-actions">
                             ${switchLoginBtn}
-                            <button class="at-btn at-btn-small at-btn-danger account-remove-btn" data-email="${acc.email}">${t('autoTrigger.deleteBtn') || '删除'}</button>
+                            <button class="at-btn at-btn-small at-btn-danger account-remove-btn" data-email="${acc.email}">${t('autoTrigger.deleteBtn') || 'Delete'}</button>
                         </div>
                     </div>
                 `;
             }).join('')}</div>`;
 
-            // 绑定点击整行切换查看配额
+            // 绑定点击整行Switch查看Quota
             body.querySelectorAll('.account-manage-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
@@ -242,7 +242,7 @@
                 });
             });
 
-            // 绑定切换登录按钮（需确认）
+            // 绑定Switch登录Button（需Confirm）
             body.querySelectorAll('.account-switch-login-btn').forEach(btn =>
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -253,7 +253,7 @@
                 })
             );
 
-            // 绑定删除按钮
+            // 绑定DeleteButton
             body.querySelectorAll('.account-remove-btn').forEach(btn =>
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -267,7 +267,7 @@
         }
 
         /**
-         * 显示切换登录确认弹窗
+         * ShowSwitch登录Confirm弹窗
          */
         showSwitchLoginConfirmModal(email) {
             let modal = document.getElementById('switch-login-confirm-modal');
@@ -275,17 +275,17 @@
                 modal = this._createModal('switch-login-confirm-modal', `
                     <div class="modal-content" style="max-width: 400px;">
                         <div class="modal-header">
-                            <h3>${t('autoTrigger.switchLoginTitle') || '切换登录账户'}</h3>
+                            <h3>${t('autoTrigger.switchLoginTitle') || 'Switch登录账户'}</h3>
                             <button class="close-btn" id="switch-login-confirm-close">×</button>
                         </div>
                         <div class="modal-body" style="padding: 20px;">
-                            <p style="margin-bottom: 10px;">${t('autoTrigger.switchLoginConfirmText') || '确定要切换到以下账户吗？'}</p>
+                            <p style="margin-bottom: 10px;">${t('autoTrigger.switchLoginConfirmText') || '确定要Switch到以下账户吗？'}</p>
                             <p style="font-weight: bold; color: var(--accent-color); margin-bottom: 15px;" id="switch-login-target-email"></p>
-                            <p style="color: var(--warning-color); font-size: 0.9em;">⚠️ ${t('autoTrigger.switchLoginWarning') || '此操作将重启 Antigravity 客户端以完成账户切换。'}</p>
+                            <p style="color: var(--warning-color); font-size: 0.9em;">⚠️ ${t('autoTrigger.switchLoginWarning') || '此操作将重启 Antigravity Client以Done账户Switch。'}</p>
                         </div>
                         <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end; padding: 15px 20px;">
-                            <button class="at-btn at-btn-secondary" id="switch-login-confirm-cancel">${t('common.cancel') || '取消'}</button>
-                            <button class="at-btn at-btn-primary" id="switch-login-confirm-ok">${t('common.confirm') || '确认'}</button>
+                            <button class="at-btn at-btn-secondary" id="switch-login-confirm-cancel">${t('common.cancel') || 'Cancel'}</button>
+                            <button class="at-btn at-btn-primary" id="switch-login-confirm-ok">${t('common.confirm') || 'Confirm'}</button>
                         </div>
                     </div>
                 `);
@@ -294,10 +294,10 @@
                 document.getElementById('switch-login-confirm-cancel')?.addEventListener('click', () => modal.classList.add('hidden'));
             }
 
-            // 设置目标邮箱
+            // Set目标Email
             document.getElementById('switch-login-target-email').textContent = email;
 
-            // 绑定确认按钮（替换以避免重复绑定）
+            // 绑定ConfirmButton（替换以避免重复绑定）
             const okBtn = document.getElementById('switch-login-confirm-ok');
             const newOkBtn = okBtn.cloneNode(true);
             okBtn.parentNode.replaceChild(newOkBtn, okBtn);
@@ -316,7 +316,7 @@
                 modal = this._createModal('at-sync-config-modal', `
                     <div class="modal-content at-sync-config-content">
                         <div class="modal-header">
-                        <h3>⚙ ${t('atSyncConfig.title') || '账号同步配置'}</h3>
+                        <h3>⚙ ${t('atSyncConfig.title') || 'AccountSyncConfig'}</h3>
                             <button class="close-btn" id="close-at-sync-config-modal">×</button>
                         </div>
                         <div class="modal-body at-sync-config-body">
@@ -326,36 +326,36 @@
                                         <div class="at-sync-section-title-row">
                                             <div class="at-sync-section-title">ℹ️ ${t('atSyncConfig.featureTitle') || '功能说明'}</div>
                                             <span class="at-sync-details-link">
-                                                ${t('atSyncConfig.dataAccessDetails') || '展开详情说明'}
+                                                ${t('atSyncConfig.dataAccessDetails') || 'ExpandDetails说明'}
                                             </span>
                                         </div>
-                                        <div class="at-sync-description at-sync-info-summary">${t('atSyncConfig.featureSummary') || '查看数据访问与同步/导入规则。'}</div>
+                                        <div class="at-sync-description at-sync-info-summary">${t('atSyncConfig.featureSummary') || '查看Data访问与Sync/Import规则。'}</div>
                                     </summary>
                                     <div class="at-sync-details-body">
                                         <div class="at-sync-info-block">
-                                            <div class="at-sync-info-subtitle">🛡️ ${t('atSyncConfig.dataAccessTitle') || '数据访问说明'}</div>
-                                            <div class="at-sync-description">${t('atSyncConfig.dataAccessDesc') || '本功能会读取您本地 Antigravity Tools 与 Antigravity 客户端的账户信息，仅用于本插件授权/切换。'}</div>
+                                            <div class="at-sync-info-subtitle">🛡️ ${t('atSyncConfig.dataAccessTitle') || 'Data访问说明'}</div>
+                                            <div class="at-sync-description">${t('atSyncConfig.dataAccessDesc') || '本功能会读取您Local Antigravity Tools 与 Antigravity Client的账户Info，仅用于本PluginAuthorization/Switch。'}</div>
                                             <div class="at-sync-path-info">
-                                                <span class="at-sync-path-label">${t('atSyncConfig.readPathTools') || 'Antigravity Tools 路径'}:</span>
+                                                <span class="at-sync-path-label">${t('atSyncConfig.readPathTools') || 'Antigravity Tools Path'}:</span>
                                                 <code class="at-sync-path">~/.antigravity_tools/</code>
                                             </div>
                                             <div class="at-sync-path-info">
-                                                <span class="at-sync-path-label">${t('atSyncConfig.readPathLocal') || 'Antigravity 客户端路径'}:</span>
+                                                <span class="at-sync-path-label">${t('atSyncConfig.readPathLocal') || 'Antigravity ClientPath'}:</span>
                                                 <code class="at-sync-path">.../Antigravity/User/globalStorage/state.vscdb</code>
                                             </div>
                                             <div class="at-sync-data-list">
-                                                <span class="at-sync-data-label">${t('atSyncConfig.readData') || '读取内容'}:</span>
-                                                <span class="at-sync-data-items">${t('atSyncConfig.readDataItems') || '账户邮箱、Refresh Token（本地读取）'}</span>
+                                                <span class="at-sync-data-label">${t('atSyncConfig.readData') || '读取Content'}:</span>
+                                                <span class="at-sync-data-items">${t('atSyncConfig.readDataItems') || '账户Email、Refresh Token（Local读取）'}</span>
                                             </div>
                                         </div>
                                         <div class="at-sync-info-block">
                                             <div class="at-sync-info-line">
-                                                <span class="at-sync-info-label">${t('atSyncConfig.autoSyncTitle') || '自动同步'}：</span>
-                                                <span class="at-sync-info-text">${t('atSyncConfig.autoSyncDesc') || '启用后检测到 Antigravity Tools 新账号时自动导入。'}</span>
+                                                <span class="at-sync-info-label">${t('atSyncConfig.autoSyncTitle') || '自动Sync'}：</span>
+                                                <span class="at-sync-info-text">${t('atSyncConfig.autoSyncDesc') || 'Enable后检测到 Antigravity Tools 新Account时自动Import。'}</span>
                                             </div>
                                             <div class="at-sync-info-line">
-                                                <span class="at-sync-info-label">${t('atSyncConfig.manualImportTitle') || '手动导入'}：</span>
-                                                <span class="at-sync-info-text">${t('atSyncConfig.manualImportDesc') || '分别导入本地账户或 Antigravity Tools 账户，仅执行一次。'}</span>
+                                                <span class="at-sync-info-label">${t('atSyncConfig.manualImportTitle') || '手动Import'}：</span>
+                                                <span class="at-sync-info-text">${t('atSyncConfig.manualImportDesc') || '分别ImportLocal账户或 Antigravity Tools 账户，仅Execute一次。'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -366,16 +366,16 @@
                                 <div class="at-sync-toggle-card">
                                     <label class="at-sync-toggle-label">
                                         <input type="checkbox" id="at-sync-modal-checkbox">
-                                        <span>${t('atSyncConfig.enableAutoSync') || '自动同步Antigravity Tools账户'}</span>
+                                        <span>${t('atSyncConfig.enableAutoSync') || '自动SyncAntigravity Tools账户'}</span>
                                     </label>
                                 </div>
                             </div>
                         </div>
                             <div class="at-sync-section">
-                                <div class="at-sync-section-title">📥 ${t('atSyncConfig.manualImportTitle') || '手动导入'}</div>
+                                <div class="at-sync-section-title">📥 ${t('atSyncConfig.manualImportTitle') || '手动Import'}</div>
                                 <div class="at-sync-import-actions">
-                                    <button id="at-sync-modal-import-local-btn" class="at-btn at-btn-primary at-sync-import-btn">${t('atSyncConfig.importLocal') || '导入本地账户'}</button>
-                                    <button id="at-sync-modal-import-tools-btn" class="at-btn at-btn-primary at-sync-import-btn">${t('atSyncConfig.importTools') || '导入 Antigravity Tools 账户'}</button>
+                                    <button id="at-sync-modal-import-local-btn" class="at-btn at-btn-primary at-sync-import-btn">${t('atSyncConfig.importLocal') || 'ImportLocal账户'}</button>
+                                    <button id="at-sync-modal-import-tools-btn" class="at-btn at-btn-primary at-sync-import-btn">${t('atSyncConfig.importTools') || 'Import Antigravity Tools 账户'}</button>
                                 </div>
                             </div>
                         </div>
@@ -415,37 +415,37 @@
                 modal = this._createModal('auth-choice-modal', `
                     <div class="modal-content auth-choice-content">
                         <div class="modal-header">
-                            <h3>${t('authChoice.title') || '选择登录方式'}</h3>
+                            <h3>${t('authChoice.title') || 'Select登录方式'}</h3>
                             <button class="close-btn" id="close-auth-choice-modal">×</button>
                         </div>
                         <div class="modal-body auth-choice-body">
                             <div class="auth-choice-info">
-                                <div class="auth-choice-desc">${t('authChoice.desc') || '请选择读取本地已授权账号或授权登录。'}</div>
-                                <div class="auth-choice-tip">${t('authChoice.tip') || '授权登录适用于无客户端；本地读取仅对当前机器生效。'}</div>
+                                <div class="auth-choice-desc">${t('authChoice.desc') || '请Select读取Local已AuthorizationAccount或Authorization登录。'}</div>
+                                <div class="auth-choice-tip">${t('authChoice.tip') || 'Authorization登录适用于无Client；Local读取仅对Current机器生效。'}</div>
                             </div>
                             <div class="auth-choice-grid">
                                 <div class="auth-choice-card">
                                     <div class="auth-choice-header">
                                         <span class="auth-choice-icon">🖥️</span>
                                         <div>
-                                            <div class="auth-choice-title">${t('authChoice.localTitle') || '读取本地已授权账号'}</div>
-                                            <div class="auth-choice-text">${t('authChoice.localDesc') || '读取本机 Antigravity 客户端已授权账号，不重新授权，仅复用现有授权。'}</div>
+                                            <div class="auth-choice-title">${t('authChoice.localTitle') || '读取Local已AuthorizationAccount'}</div>
+                                            <div class="auth-choice-text">${t('authChoice.localDesc') || '读取本机 Antigravity Client已AuthorizationAccount，不Reauthorize，仅复用现有Authorization。'}</div>
                                         </div>
                                     </div>
                                     <button id="auth-choice-local-btn" class="at-btn at-btn-primary auth-choice-btn">
-                                        ${t('authChoice.localBtn') || '读取本地授权'}
+                                        ${t('authChoice.localBtn') || '读取LocalAuthorization'}
                                     </button>
                                 </div>
                                 <div class="auth-choice-card">
                                     <div class="auth-choice-header">
                                         <span class="auth-choice-icon">🔐</span>
                                         <div>
-                                            <div class="auth-choice-title">${t('authChoice.oauthTitle') || '授权登录（云端授权）'}</div>
-                                            <div class="auth-choice-text">${t('authChoice.oauthDesc') || '通过 Google OAuth 新授权，适用于无客户端场景，可撤销。'}</div>
+                                            <div class="auth-choice-title">${t('authChoice.oauthTitle') || 'Authorization登录（云端Authorization）'}</div>
+                                            <div class="auth-choice-text">${t('authChoice.oauthDesc') || '通过 Google OAuth 新Authorization，适用于无Client场景，可撤销。'}</div>
                                         </div>
                                     </div>
                                     <button id="auth-choice-oauth-btn" class="at-btn at-btn-primary auth-choice-btn">
-                                        ${t('authChoice.oauthBtn') || '去授权登录'}
+                                        ${t('authChoice.oauthBtn') || '去Authorization登录'}
                                     </button>
                                 </div>
                             </div>

@@ -1,195 +1,186 @@
-# 自动发布到 Open VSX Registry
+# Publishing Guide
 
-## � 快速发布（推荐）
+## Quick Release (Recommended)
 
-使用一键发布脚本,自动完成编译、打包、发布全流程:
+Use the one-click release script for automated compile, package, and publish:
 
 ```bash
-# 方式 1: 使用当前版本号发布（package.json 中的版本）
+# Option 1: Publish using current version number (from package.json)
 npm run release
 
-# 方式 2: 更新版本号并发布
-npm run release 2.0.3
+# Option 2: Update version number and publish
+npm run release 2.1.0
 ```
 
-**脚本会自动执行:**
-1. ✅ 清理旧的构建产物
-2. ✅ 运行 lint 检查
-3. ✅ 编译生产版本
-4. ✅ 打包 VSIX
-5. ✅ 创建 Git tag
-6. ✅ 推送到 GitHub
-7. ✅ 触发 GitHub Actions 自动发布
+**The script will automatically:**
+1. ✅ Clean old build artifacts
+2. ✅ Run lint checks
+3. ✅ Compile production version
+4. ✅ Package VSIX
+5. ✅ Create Git tag
+6. ✅ Push to GitHub
 
 ---
 
-## 📦 完整发布流程
+## Complete Release Flow
 
-### 步骤 1: 准备发布
+### Step 1: Prepare Release
 
 ```bash
-# 1. 确保所有改动已提交
+# 1. Ensure all changes are committed
 git status
 
-# 2. 更新 CHANGELOG（重要！）
-# 编辑 CHANGELOG.md 和 CHANGELOG.zh-CN.md
-# 添加新版本的更新内容
+# 2. Update CHANGELOG (important!)
+# Edit CHANGELOG.md with new version content
 
-# 3. 提交 CHANGELOG
-git add CHANGELOG*.md
-git commit -m "docs: update changelog for v2.0.3"
+# 3. Commit CHANGELOG
+git add CHANGELOG.md
+git commit -m "docs: update changelog for v2.1.0"
 ```
 
-### 步骤 2: 执行发布
+### Step 2: Execute Release
 
 ```bash
-# 使用发布脚本（推荐）
-npm run release 2.0.3
+# Use release script (recommended)
+npm run release 2.1.0
 
-# 或者手动执行
-./scripts/release.sh 2.0.3
+# Or run manually
+./scripts/release.sh 2.1.0
 ```
 
-### 步骤 3: 验证发布
+### Step 3: Verify Release
 
-1. **查看 GitHub Actions 进度**
-   - 访问: https://github.com/jlcodes99/vscode-antigravity-cockpit/actions
-   - 确认 "Publish to Open VSX Registry" 和 "Release VSIX" 工作流成功
+1. **Check GitHub Actions progress**
+   - Confirm workflows completed successfully
 
-2. **检查 GitHub Release**
-   - 访问: https://github.com/jlcodes99/vscode-antigravity-cockpit/releases
-   - 确认新版本已发布,VSIX 包已上传
-
-3. **验证 Open VSX**
-   - 访问: https://open-vsx.org/extension/jlcodes/antigravity-cockpit
-   - 确认新版本已上线
+2. **Check GitHub Release**
+   - Verify new version is published and VSIX package is uploaded
 
 ---
 
-## 🔧 自动化配置
+## Automation Setup
 
 ### Git Hooks
 
-项目已配置 Git hooks,在推送 tag 前自动检查:
+The project has Git hooks configured to check before pushing tags:
 
-- **pre-push hook**: 推送 tag 时检查 VSIX 包是否存在
-- **自动安装**: 运行 `npm install` 时自动安装 hooks
+- **pre-push hook**: Checks if VSIX package exists when pushing tags
+- **Auto-install**: Hooks are installed automatically when running `npm install`
 
-手动安装 hooks:
+Manual hook installation:
 ```bash
 npm run postinstall
-# 或
+# or
 bash scripts/install-hooks.sh
 ```
 
 ### GitHub Actions
 
-配置了两个自动化工作流:
+Two automated workflows are configured:
 
-1. **publish-ovsx.yml**: 发布到 Open VSX Registry
-   - 触发条件: 推送 `v*` tag
-   - 执行步骤: 编译 → 打包 → 发布到 Open VSX
+1. **publish-ovsx.yml**: Publish to Open VSX Registry
+   - Trigger: Push `v*` tag
+   - Steps: Compile → Package → Publish to Open VSX
 
-2. **release.yml**: 创建 GitHub Release
-   - 触发条件: 推送 `v*` tag
-   - 执行步骤: 编译 → 打包 → 上传 VSIX 到 Release
+2. **release.yml**: Create GitHub Release
+   - Trigger: Push `v*` tag
+   - Steps: Compile → Package → Upload VSIX to Release
 
 ### GitHub Secrets
 
-已配置的 Secret:
-- `OVSX_TOKEN`: Open VSX Registry 的 Personal Access Token
+Configured Secrets:
+- `OVSX_TOKEN`: Open VSX Registry Personal Access Token
 
 ---
 
-## 📋 发布前检查清单
+## Pre-Release Checklist
 
-- [ ] 所有功能已测试通过
-- [ ] 代码已通过 lint 检查 (`npm run lint`)
-- [ ] 更新 `CHANGELOG.md` 和 `CHANGELOG.zh-CN.md`
-- [ ] 更新 `package.json` 中的 `version` 字段（如果使用参数发布则自动更新）
-- [ ] 所有改动已提交到 Git
-- [ ] Tag 版本号与 `package.json` 一致
+- [ ] All features tested
+- [ ] Code passes lint check (`npm run lint`)
+- [ ] Updated `CHANGELOG.md`
+- [ ] Updated `package.json` version field (if not using parameter publish)
+- [ ] All changes committed to Git
+- [ ] Tag version matches `package.json`
 
 ---
 
-## 🚀 版本号规范
+## Version Numbering
 
-遵循语义化版本（Semantic Versioning）:
+Follow Semantic Versioning:
 
-- **主版本号（Major）**: 不兼容的 API 修改
-  - 例如: `v2.0.0` → `v3.0.0`
+- **Major**: Incompatible API changes
+  - Example: `v2.0.0` → `v3.0.0`
   
-- **次版本号（Minor）**: 向下兼容的功能性新增
-  - 例如: `v2.0.0` → `v2.1.0`
+- **Minor**: Backwards-compatible new features
+  - Example: `v2.0.0` → `v2.1.0`
   
-- **修订号（Patch）**: 向下兼容的问题修正
-  - 例如: `v2.0.0` → `v2.0.1`
+- **Patch**: Backwards-compatible bug fixes
+  - Example: `v2.0.0` → `v2.0.1`
 
 ---
 
-## 🛠️ 手动发布（备用方案）
+## Manual Publishing (Backup)
 
-如果自动化脚本失败,可以手动发布:
+If automated scripts fail, publish manually:
 
 ```bash
-# 1. 编译生产版本
+# 1. Compile production version
 npm run build:prod
 
-# 2. 打包 VSIX
+# 2. Package VSIX
 npm run package
 
-# 3. 创建 tag
-git tag v2.0.3
-git push origin v2.0.3
+# 3. Create tag
+git tag v2.1.0
+git push origin v2.1.0
 
-# 4. 手动发布到 Open VSX（如果 GitHub Actions 失败）
+# 4. Manually publish to Open VSX (if GitHub Actions fails)
 npx ovsx publish -p YOUR_TOKEN
 ```
 
 ---
 
-## 📝 注意事项
+## Notes
 
-1. **Tag 必须以 `v` 开头**,例如 `v2.0.2`
-2. **版本号必须唯一**,不能重复发布相同版本
-3. **发布后无法撤回**,请谨慎操作
-4. **VSIX 包不提交到 Git**,已在 `.gitignore` 中排除
-5. **查看发布日志**: GitHub 仓库 → Actions 标签页
+1. **Tags must start with `v`**, e.g., `v2.0.2`
+2. **Version must be unique**, cannot republish same version
+3. **Publishing is irreversible**, proceed carefully
+4. **VSIX packages are not committed to Git**, excluded in `.gitignore`
+5. **View publish logs**: GitHub repository → Actions tab
 
 ---
 
-## 🐛 故障排查
+## Troubleshooting
 
-### 问题: GitHub Actions 发布失败
+### Problem: GitHub Actions publish failed
 
-**解决方案:**
-1. 检查 `OVSX_TOKEN` 是否正确配置
-2. 查看 Actions 日志,确认具体错误
-3. 使用手动发布作为备用方案
+**Solution:**
+1. Check if `OVSX_TOKEN` is correctly configured
+2. View Actions logs for specific errors
+3. Use manual publish as backup
 
-### 问题: VSIX 包未生成
+### Problem: VSIX package not generated
 
-**解决方案:**
+**Solution:**
 ```bash
-# 清理并重新构建
+# Clean and rebuild
 rm -rf out node_modules
 npm install
 npm run build:prod
 npm run package
 ```
 
-### 问题: Tag 已存在
+### Problem: Tag already exists
 
-**解决方案:**
+**Solution:**
 ```bash
-# 删除本地 tag
-git tag -d v2.0.3
+# Delete local tag
+git tag -d v2.1.0
 
-# 删除远程 tag
-git push origin :refs/tags/v2.0.3
+# Delete remote tag
+git push origin :refs/tags/v2.1.0
 
-# 重新创建 tag
-git tag v2.0.3
-git push origin v2.0.3
+# Recreate tag
+git tag v2.1.0
+git push origin v2.1.0
 ```
-

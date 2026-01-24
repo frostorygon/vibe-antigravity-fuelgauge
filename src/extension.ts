@@ -1,6 +1,6 @@
 /**
- * Antigravity Cockpit - 扩展入口
- * VS Code 扩展的主入口点
+ * Antigravity FuelGauge - Extension Entry Point
+ * Main entry point for the VS Code extension
  */
 
 import * as vscode from 'vscode';
@@ -31,7 +31,7 @@ import { AccountTreeProvider, registerAccountTreeCommands } from './view/account
 import { cockpitToolsWs } from './services/cockpitToolsWs';
 import { cockpitToolsSyncEvents } from './services/cockpitToolsSync';
 
-// 全局模块实例
+// Global module instances
 let hunter: ProcessHunter;
 let reactor: ReactorCore;
 let hud: CockpitHUD;
@@ -48,48 +48,48 @@ let _telemetryController: TelemetryController;
 let systemOnline = false;
 let lastQuotaSource: 'local' | 'authorized';
 
-// 自动重试计数器
+// Auto-retry counter
 let autoRetryCount = 0;
 const MAX_AUTO_RETRY = 3;
 const AUTO_RETRY_DELAY_MS = 5000;
 
 /**
- * 扩展激活入口
+ * Extension activation entry
  */
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-    // 初始化日志
+    // Initialize logger
     logger.init();
     await configService.initialize(context);
 
-    // 应用保存的语言设置
+    // Apply saved language settings
     const savedLanguage = configService.getConfig().language;
     if (savedLanguage) {
         i18n.applyLanguageSetting(savedLanguage);
     }
 
-    // 启动时同步：读取共享配置文件，与本地配置比较时间戳后合并
+    // Startup sync: Read shared config file and merge based on timestamp comparison
     try {
         const { mergeSettingOnStartup } = await import('./services/syncSettings');
         const mergedLanguage = mergeSettingOnStartup('language', savedLanguage || 'auto');
         if (mergedLanguage) {
-            logger.info(`[SyncSettings] 启动时合并语言设置: ${savedLanguage} -> ${mergedLanguage}`);
+            logger.info(`[SyncSettings] Merged language setting on startup: ${savedLanguage} -> ${mergedLanguage}`);
             await configService.updateConfig('language', mergedLanguage);
             i18n.applyLanguageSetting(mergedLanguage);
         }
     } catch (err) {
-        logger.debug(`[SyncSettings] 启动时同步失败: ${err instanceof Error ? err.message : String(err)}`);
+        logger.debug(`[SyncSettings] Startup sync failed: ${err instanceof Error ? err.message : String(err)}`);
     }
 
-    // 获取插件版本号
+    // Get extension version
     const packageJson = await import('../package.json');
     const version = packageJson.version || 'unknown';
 
-    // 初始化错误上报服务（放在日志之后，其他模块之前）
+    // Initialize error reporter (after logger, before other modules)
     initErrorReporter(version);
 
-    logger.info(`Antigravity Cockpit v${version} - Systems Online`);
+    logger.info(`Antigravity FuelGauge v${version} - Systems Online`);
 
-    // 初始化核心模块
+    // Initialize core modules
     hunter = new ProcessHunter();
     reactor = new ReactorCore();
     accountsRefreshService = new AccountsRefreshService(reactor);
@@ -98,66 +98,66 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     quickPickView = new QuickPickView();
     lastQuotaSource = configService.getConfig().quotaSource === 'authorized' ? 'authorized' : 'local';
 
-    // 设置账号总览关闭回调
-    // 注意：不再自动重新打开 Dashboard，而是保持用户最后的视图状态
+    // Set accounts overview close callback
+    // Note: No longer auto-reopening Dashboard, keeping users last view state
     accountsOverview.onClose(() => {
-        // 用户手动关闭面板时，不再自动打开 Dashboard
-        // 这样用户下次点击状态栏时会根据保存的状态决定打开哪个视图
+        // When user manually closes panel, no longer auto-open Dashboard
+        // Next time user clicks status bar, view opens based on saved state
         logger.info('[AccountsOverview] Panel closed');
     });
 
-    // 注册账号总览命令
+    // Register accounts overview command
     context.subscriptions.push(
         vscode.commands.registerCommand('agCockpit.openAccountsOverview', async () => {
-            // 保存视图状态：用户选择了账号总览
+            // Save view state: user selected accounts overview
             await configService.setStateValue('lastActiveView', 'accountsOverview');
-            // 先关闭 Dashboard
+            // Close Dashboard first
             hud.dispose();
-            // 打开账号总览
+            // Open accounts overview
             await accountsOverview.show();
         }),
     );
 
-    // 注册从账号总览返回 Dashboard 的命令
+    // Register command to return from accounts overview to Dashboard
     context.subscriptions.push(
         vscode.commands.registerCommand('agCockpit.backToDashboard', async () => {
-            // 保存视图状态：用户选择了返回 Dashboard
+            // Save view state: user selected return to Dashboard
             await configService.setStateValue('lastActiveView', 'dashboard');
             accountsOverview.dispose();
-            // 打开 Dashboard（使用 forceView 确保打开 Dashboard 而不是根据状态判断）
+            // Open Dashboard (use forceView to ensure Dashboard opens instead of state-based)
             setTimeout(() => {
                 vscode.commands.executeCommand('agCockpit.open', { forceView: 'dashboard' });
             }, 100);
         }),
     );
 
-    // 注册 Webview Panel Serializer，确保插件重载后能恢复 panel 引用
+    // Register Webview Panel Serializer to restore panel reference after reload
     context.subscriptions.push(hud.registerSerializer());
 
-    // 设置 QuickPick 刷新回调
+    // Set QuickPick refresh callback
     quickPickView.onRefresh(() => {
         reactor.syncTelemetry();
     });
 
-    // 初始化状态栏控制器
+    // Initialize status bar controller
     statusBar = new StatusBarController(context);
 
-    // 定义重试/启动回调
+    // Define retry/boot callback
     const onRetry = async () => {
         systemOnline = false;
         await bootSystems();
     };
 
-    // 初始化其他控制器
+    // Initialize other controllers
     _telemetryController = new TelemetryController(reactor, statusBar, hud, quickPickView, onRetry);
     _messageController = new MessageController(context, hud, reactor, onRetry);
     _commandController = new CommandController(context, hud, quickPickView, accountsOverview, reactor, onRetry);
 
-    // 初始化自动触发控制器
+    // Initialize auto-trigger controller
     autoTriggerController.initialize(context);
 
-    // 启动时自动同步到客户端当前登录账户
-    // 必须同步等待完成，避免与后续操作产生竞态条件
+    // Auto-sync to client current account on startup
+    // Must wait for sync to complete to avoid race conditions
     try {
         const syncResult = await autoTriggerController.syncToClientAccountOnStartup();
         if (syncResult === 'switched') {
@@ -167,10 +167,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         logger.debug(`[Startup] Account sync skipped: ${err instanceof Error ? err.message : err}`);
     }
 
-    // 初始化公告服务
+    // Initialize announcement service
     announcementService.initialize(context);
 
-    // 初始化 Account Tree View
+    // Initialize Account Tree View
     const accountTreeProvider = new AccountTreeProvider(accountsRefreshService);
     const accountTreeView = vscode.window.createTreeView('agCockpit.accountTree', {
         treeDataProvider: accountTreeProvider,
@@ -180,7 +180,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     context.subscriptions.push({ dispose: () => accountsRefreshService.dispose() });
     registerAccountTreeCommands(context, accountTreeProvider);
 
-    // 连接 Cockpit Tools WebSocket
+    // Connect to Cockpit Tools WebSocket
     cockpitToolsWs.connect();
 
     cockpitToolsSyncEvents.on('localChanged', () => {
@@ -188,29 +188,29 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         hud.sendMessage({ type: 'refreshAccounts' });
     });
     
-    // WebSocket 连接成功后刷新账号树
+    // Refresh account tree after WebSocket connection
     cockpitToolsWs.on('connected', () => {
-        logger.info('[WS] 连接成功，刷新账号列表');
+        logger.info('[WS] Connected, refreshing account list');
         void accountsRefreshService.refresh({ reason: 'ws.connected' });
     });
     
-    // 监听数据变更事件
+    // Listen for data change events
     cockpitToolsWs.on('dataChanged', async (payload: { source?: string }) => {
         const source = payload?.source ?? 'unknown';
-        logger.info('[WS] 收到数据变更通知，开始同步');
+        logger.info('[WS] Received data change notification, starting sync');
         await accountsRefreshService.refresh({ forceSync: true, reason: `dataChanged:${source}` });
-        // 通知 Webview 刷新账号数据
+        // Notify Webview to refresh account data
         hud.sendMessage({ type: 'refreshAccounts' });
     });
     
     cockpitToolsWs.on('accountSwitched', async (payload: { email: string }) => {
-        logger.info(`[WS] 账号已切换: ${payload.email}`);
+        logger.info(`[WS] Account switched: ${payload.email}`);
         
-        // 同步本地 Active Account 状态，跳过通知 Tools
+        // Sync local Active Account state, skip notifying Tools
         await credentialStorage.setActiveAccount(payload.email, true);
 
         await accountsRefreshService.refresh({ reason: 'ws.accountSwitched' });
-        // 通知 Webview 刷新
+        // Notify Webview to refresh
         hud.sendMessage({ type: 'accountSwitched', email: payload.email });
         vscode.window.showInformationMessage(t('ws.accountSwitched', { email: payload.email }));
     });
@@ -233,7 +233,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             return;
         }
 
-        logger.info(`[WS] 语言已同步: ${normalizedLanguage}`);
+        logger.info(`[WS] Language synced: ${normalizedLanguage}`);
         await configService.updateConfig('language', normalizedLanguage);
         const localeChanged = i18n.applyLanguageSetting(normalizedLanguage);
         if (localeChanged) {
@@ -257,23 +257,23 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             });
             vscode.window.showInformationMessage(t('ws.wakeupOverride'));
         } catch (err) {
-            logger.warn(`[WS] 关闭插件唤醒失败: ${err instanceof Error ? err.message : String(err)}`);
+            logger.warn(`[WS] Failed to disable extension wakeup: ${err instanceof Error ? err.message : String(err)}`);
         }
     });
 
-    // 监听配置变化
+    // Listen for config changes
     context.subscriptions.push(
         configService.onConfigChange(handleConfigChange),
     );
 
-    // 启动系统
+    // Boot systems
     await bootSystems();
 
-    logger.info('Antigravity Cockpit Fully Operational');
+    logger.info('Antigravity FuelGauge Fully Operational');
 }
 
 /**
- * 处理配置变化
+ * Handle config change
  */
 async function handleConfigChange(config: CockpitConfig): Promise<void> {
     logger.debug('Configuration changed', config);
@@ -285,24 +285,24 @@ async function handleConfigChange(config: CockpitConfig): Promise<void> {
         lastQuotaSource = currentQuotaSource;
     }
 
-    // 仅当刷新间隔变化时重启 Reactor
+    // Restart Reactor only when refresh interval changes
     const newInterval = configService.getRefreshIntervalMs();
 
-    // 如果 Reactor 已经在运行且间隔没有变化，则忽略
+    // Ignore if Reactor is running and interval unchanged
     if (systemOnline && reactor.currentInterval !== newInterval) {
         logger.info(`Refresh interval changed from ${reactor.currentInterval}ms to ${newInterval}ms. Restarting Reactor.`);
         reactor.startReactor(newInterval);
     }
 
-    // 对于任何配置变更，立即重新处理最近的数据以更新 UI（如状态栏格式变化）
-    // 这确保存储在 lastSnapshot 中的数据使用新配置重新呈现
+    // For any config change, immediately reprocess recent data to update UI (e.g., status bar format)
+    // This ensures data in lastSnapshot is re-rendered with new config
     if (!quotaSourceChanged) {
         reactor.reprocess();
     }
 }
 
 /**
- * 启动系统
+ * Boot systems
  */
 async function bootSystems(): Promise<void> {
     if (systemOnline) {
@@ -339,11 +339,11 @@ async function bootSystems(): Promise<void> {
             reactor.engage(info.connectPort, info.csrfToken, hunter.getLastDiagnostics());
             reactor.startReactor(configService.getRefreshIntervalMs());
             systemOnline = true;
-            autoRetryCount = 0; // 重置计数器
+            autoRetryCount = 0; // Reset counter
             statusBar.setReady();
             logger.info('System boot successful');
         } else {
-            // 自动重试机制
+            // Auto-retry mechanism
             if (autoRetryCount < MAX_AUTO_RETRY) {
                 autoRetryCount++;
                 logger.info(`Auto-retry ${autoRetryCount}/${MAX_AUTO_RETRY} in ${AUTO_RETRY_DELAY_MS / 1000}s...`);
@@ -353,7 +353,7 @@ async function bootSystems(): Promise<void> {
                     bootSystems();
                 }, AUTO_RETRY_DELAY_MS);
             } else {
-                autoRetryCount = 0; // 重置计数器
+                autoRetryCount = 0; // Reset counter
                 handleOfflineState();
             }
         }
@@ -369,7 +369,7 @@ async function bootSystems(): Promise<void> {
             scan: hunter.getLastDiagnostics(),
         });
 
-        // 自动重试机制（异常情况也自动重试）
+        // Auto-retry mechanism（异常情况也自动Retry）
         if (autoRetryCount < MAX_AUTO_RETRY) {
             autoRetryCount++;
             logger.info(`Auto-retry ${autoRetryCount}/${MAX_AUTO_RETRY} after error in ${AUTO_RETRY_DELAY_MS / 1000}s...`);
@@ -379,10 +379,10 @@ async function bootSystems(): Promise<void> {
                 bootSystems();
             }, AUTO_RETRY_DELAY_MS);
         } else {
-            autoRetryCount = 0; // 重置计数器
+            autoRetryCount = 0; // Reset counter
             statusBar.setError(error.message);
 
-            // 显示系统弹框
+            // Show system dialog
             vscode.window.showErrorMessage(
                 `${t('notify.bootFailed')}: ${error.message}`,
                 t('help.retry'),
@@ -399,7 +399,7 @@ async function bootSystems(): Promise<void> {
 }
 
 /**
- * 处理离线状态
+ * Handle offline state
  */
 function handleOfflineState(): void {
     if (configService.getConfig().quotaSource === 'authorized') {
@@ -408,7 +408,7 @@ function handleOfflineState(): void {
     }
     statusBar.setOffline();
 
-    // 显示带操作按钮的消息
+    // Show message with action buttons
     vscode.window.showErrorMessage(
         t('notify.offline'),
         t('help.retry'),
@@ -421,7 +421,7 @@ function handleOfflineState(): void {
         }
     });
 
-    // 更新 Dashboard 显示离线状态
+    // Update Dashboard to show offline state
     hud.refreshView(ReactorCore.createOfflineSnapshot(t('notify.offline')), {
         showPromptCredits: false,
         pinnedModels: [],
@@ -434,20 +434,20 @@ function handleOfflineState(): void {
         refreshInterval: 120,
         notificationEnabled: false,
         language: configService.getConfig().language,
-        quotaSource: 'local', // 必须传递 quotaSource，否则前端切换逻辑无法完成
+        quotaSource: 'local', // Must pass quotaSource, otherwise frontend switch logic cannot complete
     });
 }
 
 /**
- * 扩展停用
+ * Extension deactivation
  */
 export async function deactivate(): Promise<void> {
-    logger.info('Antigravity Cockpit: Shutting down...');
+    logger.info('Antigravity FuelGauge: Shutting down...');
 
-    // 断开 WebSocket 连接
+    // Disconnect WebSocket
     cockpitToolsWs.disconnect();
 
-    // 刷新待发送的错误事件
+    // Flush pending error events
     await flushEvents();
 
     reactor?.shutdown();

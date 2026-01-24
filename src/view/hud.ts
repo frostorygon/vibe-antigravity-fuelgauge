@@ -1,6 +1,6 @@
 /**
- * Antigravity Cockpit - HUD 视图
- * 负责创建和管理 Webview Dashboard
+ * Antigravity FuelGauge - HUD View
+ * 负责Create和管理 Webview Dashboard
  */
 
 import * as vscode from 'vscode';
@@ -14,7 +14,7 @@ import { credentialStorage } from '../auto_trigger';
 
 /**
  * CockpitHUD 类
- * 管理 Webview 面板的创建、更新和销毁
+ * 管理 Webview Panel的Create、Update和Dispose
  */
 export class CockpitHUD {
     public static readonly viewType = 'antigravity.cockpit';
@@ -31,30 +31,30 @@ export class CockpitHUD {
     }
 
     /**
-     * 注册 Webview Panel Serializer
-     * 用于在插件重载后恢复 panel 引用
+     * Register Webview Panel Serializer
+     * 用于在Plugin重载后Resume panel 引用
      */
     public registerSerializer(): vscode.Disposable {
         return vscode.window.registerWebviewPanelSerializer(CockpitHUD.viewType, {
             deserializeWebviewPanel: async (webviewPanel: vscode.WebviewPanel, _state: unknown) => {
                 logger.info('[CockpitHUD] Restoring webview panel after reload');
 
-                // 如果已经有一个 panel，关闭旧的
+                // 如果已经有一个 panel，Close旧的
                 if (this.panel) {
                     logger.info('[CockpitHUD] Disposing old panel before restoration');
                     this.panel.dispose();
                 }
 
-                // 恢复引用
+                // Resume引用
                 this.panel = webviewPanel;
 
-                // 重新设置 webview 内容和事件监听
+                // 重新Set webview Content和EventListen
                 webviewPanel.webview.options = {
                     enableScripts: true,
                     localResourceRoots: [this.extensionUri],
                 };
 
-                // 重新同步语言（确保跟随 VS Code 语言时生效）
+                // 重新SyncLanguage（确保跟随 VS Code Language时生效）
                 i18n.applyLanguageSetting(configService.getConfig().language);
                 webviewPanel.webview.html = this.generateHtml(webviewPanel.webview);
 
@@ -68,7 +68,7 @@ export class CockpitHUD {
                     }
                 });
 
-                // 恢复后刷新数据
+                // Resume后RefreshData
                 if (this.cachedTelemetry) {
                     await this.refreshWithCachedData();
                 }
@@ -77,22 +77,22 @@ export class CockpitHUD {
     }
 
     /**
-     * 显示 HUD 面板
-     * @param initialTab 可选的初始标签页 (如 'auto-trigger')
-     * @returns 是否成功打开
+     * Show HUD Panel
+     * @param initialTab Optional的初始Label页 (如 'auto-trigger')
+     * @returns 是否SuccessOpen
      */
     public async revealHud(initialTab?: string): Promise<boolean> {
         const localeChanged = i18n.applyLanguageSetting(configService.getConfig().language);
         const column = vscode.window.activeTextEditor?.viewColumn;
 
-        // 如果已经有 panel，直接显示
+        // 如果已经有 panel，直接Show
         if (this.panel) {
             if (localeChanged) {
                 this.panel.webview.html = this.generateHtml(this.panel.webview);
             }
             this.panel.reveal(column);
             await this.refreshWithCachedData();
-            // 如果指定了初始标签页，发送消息切换
+            // 如果指定了初始Label页，Send messageSwitch
             if (initialTab) {
                 setTimeout(() => {
                     this.panel?.webview.postMessage({ type: 'switchTab', tab: initialTab });
@@ -101,8 +101,8 @@ export class CockpitHUD {
             return true;
         }
 
-        // 在创建新 panel 之前，先关闭所有旧版本的同类型 webview tabs
-        // 这解决了插件升级后出现多个 panel 的问题（旧版本没有 serializer）
+        // 在Create新 panel 之前，先Close所有旧Version的同类型 webview tabs
+        // 这解决了Plugin升级后出现多个 panel 的Issue（旧Version没有 serializer）
         await this.closeOrphanTabs();
 
         try {
@@ -135,7 +135,7 @@ export class CockpitHUD {
                 await this.refreshWithCachedData();
             }
 
-            // 如果指定了初始标签页，延迟发送消息切换
+            // 如果指定了初始Label页，DelaySend messageSwitch
             if (initialTab) {
                 setTimeout(() => {
                     panel.webview.postMessage({ type: 'switchTab', tab: initialTab });
@@ -151,8 +151,8 @@ export class CockpitHUD {
     }
 
     /**
-     * 关闭所有孤儿 webview tabs（旧版本遗留的 panel）
-     * 使用 tabGroups API 遍历所有打开的 tabs
+     * Close所有孤儿 webview tabs（旧Version遗留的 panel）
+     * 使用 tabGroups API 遍历所有Open的 tabs
      */
     private async closeOrphanTabs(): Promise<void> {
         try {
@@ -160,7 +160,7 @@ export class CockpitHUD {
 
             for (const tabGroup of vscode.window.tabGroups.all) {
                 for (const tab of tabGroup.tabs) {
-                    // 检查是否是 webview tab
+                    // Check是否是 webview tab
                     if (tab.input instanceof vscode.TabInputWebview) {
                         const tabViewType = tab.input.viewType;
                         // viewType 可能带有 extension id 前缀，使用 includes 匹配
@@ -178,12 +178,12 @@ export class CockpitHUD {
                 await vscode.window.tabGroups.close(tabsToClose);
             }
         } catch (error) {
-            // tabGroups API 可能在某些环境不可用，静默忽略
+            // tabGroups API 可能在某些Environment不可用，静默Ignore
         }
     }
 
     /**
-     * 使用缓存数据刷新视图
+     * 使用CacheDataRefresh view
      */
     private async refreshWithCachedData(): Promise<void> {
         if (!this.cachedTelemetry) {
@@ -223,21 +223,21 @@ export class CockpitHUD {
     }
 
     /**
-     * 从缓存恢复数据
+     * 从CacheResumeData
      */
     public async rehydrate(): Promise<void> {
         await this.refreshWithCachedData();
     }
 
     /**
-     * 注册消息处理器
+     * RegisterMessageHandle器
      */
     public onSignal(handler: (message: WebviewMessage) => void): void {
         this.messageRouter = handler;
     }
 
     /**
-     * 向 Webview 发送消息
+     * 向 Webview Send message
      */
     public sendMessage(message: object): void {
         if (this.panel) {
@@ -246,14 +246,14 @@ export class CockpitHUD {
     }
 
     /**
-     * 检查 Webview 面板是否可见（用户当前正在查看）
+     * Check Webview Panel是否Visible（UserCurrent正在查看）
      */
     public isVisible(): boolean {
         return this.panel?.visible === true;
     }
 
     /**
-     * 刷新视图
+     * Refresh view
      */
     public refreshView(snapshot: QuotaSnapshot, config: DashboardConfig): void {
         this.cachedTelemetry = snapshot;
@@ -264,7 +264,7 @@ export class CockpitHUD {
                 this.panel.webview.html = this.generateHtml(this.panel.webview);
             }
 
-            // 转换数据为 Webview 兼容格式
+            // 转换Data为 Webview 兼容格式
             const webviewData = this.convertToWebviewFormat(snapshot);
 
             this.panel.webview.postMessage({
@@ -276,7 +276,7 @@ export class CockpitHUD {
     }
 
     /**
-     * 转换数据格式（驼峰转下划线，兼容 Webview JS）
+     * 转换Data格式（驼峰转下划线，兼容 Webview JS）
      */
     private convertToWebviewFormat(snapshot: QuotaSnapshot): object {
         return {
@@ -334,7 +334,7 @@ export class CockpitHUD {
                 isExhausted: m.isExhausted,
                 timeUntilResetFormatted: m.timeUntilResetFormatted,
                 resetTimeDisplay: m.resetTimeDisplay,
-                // 模型能力字段
+                // Model能力字段
                 supportsImages: m.supportsImages,
                 isRecommended: m.isRecommended,
                 tagTitle: m.tagTitle,
@@ -362,20 +362,20 @@ export class CockpitHUD {
                 models: g.models.map(m => ({
                     label: m.label,
                     modelId: m.modelId,
-                    // 模型能力字段
+                    // Model能力字段
                     supportsImages: m.supportsImages,
                     isRecommended: m.isRecommended,
                     tagTitle: m.tagTitle,
                     supportedMimeTypes: m.supportedMimeTypes,
                 })),
             })),
-            // 本地账户邮箱（local 模式下使用远端 API 时）
+            // Local账户Email（local 模式下使用远端 API 时）
             localAccountEmail: snapshot.localAccountEmail,
         };
     }
 
     /**
-     * 销毁面板
+     * Dispose panel
      */
     public dispose(): void {
         if (this.panel) {
@@ -385,7 +385,7 @@ export class CockpitHUD {
     }
 
     /**
-     * 获取 Webview 资源 URI
+     * Get Webview 资源 URI
      */
     private getWebviewUri(webview: vscode.Webview, ...pathSegments: string[]): vscode.Uri {
         return webview.asWebviewUri(
@@ -394,7 +394,7 @@ export class CockpitHUD {
     }
 
     /**
-     * 读取外部资源文件内容
+     * 读取外部资源文件Content
      */
     private readResourceFile(...pathSegments: string[]): string {
         try {
@@ -407,10 +407,10 @@ export class CockpitHUD {
     }
 
     /**
-     * 生成 HTML 内容
+     * Generate HTML Content
      */
     private generateHtml(webview: vscode.Webview): string {
-        // 获取外部资源 URI
+        // Get外部资源 URI
         const styleUri = this.getWebviewUri(webview, 'out', 'view', 'webview', 'dashboard.css');
         const sharedModalStyleUri = this.getWebviewUri(webview, 'out', 'view', 'webview', 'shared_modals.css');
         const autoTriggerStyleUri = this.getWebviewUri(webview, 'out', 'view', 'webview', 'auto_trigger.css');
@@ -418,7 +418,7 @@ export class CockpitHUD {
         const autoTriggerScriptUri = this.getWebviewUri(webview, 'out', 'view', 'webview', 'auto_trigger.js');
         const authUiScriptUri = this.getWebviewUri(webview, 'out', 'view', 'webview', 'auth_ui.js');
 
-        // 获取国际化文本
+        // Geti18n文本
         const translations = i18n.getAllTranslations();
         const translationsJson = JSON.stringify(translations);
 
@@ -476,7 +476,7 @@ export class CockpitHUD {
             <button id="toggle-grouping-btn" class="refresh-btn" title="${t('grouping.toggleHint')}">
                 ${t('grouping.title')}
             </button>
-            <!-- 计划按钮已隐藏 -->
+            <!-- 计划Button已Hidden -->
             <button id="toggle-profile-btn" class="refresh-btn hidden" title="${t('profile.togglePlan')}">
                 ${t('profile.planDetails')}
             </button>
@@ -879,7 +879,7 @@ export class CockpitHUD {
                 <button id="close-settings-btn" class="close-btn">×</button>
             </div>
             <div class="modal-body">
-                <!-- 语言设置 -->
+                <!-- LanguageSet -->
                 <div class="setting-item">
                     <label for="language-select">🌐 ${t('language.title') || 'Language'}</label>
                     <select id="language-select" class="setting-select">
@@ -893,7 +893,7 @@ export class CockpitHUD {
 
                 <!-- Display Mode and View Mode moved to bottom -->
 
-                <!-- 状态栏样式选择 -->
+                <!-- State栏StyleSelect -->
                 <div class="setting-item">
                     <label for="statusbar-format">📊 ${i18n.t('statusBarFormat.title')}</label>
                     <select id="statusbar-format" class="setting-select">
@@ -936,7 +936,7 @@ export class CockpitHUD {
 
                 <hr class="setting-divider">
 
-                <!-- 显示模式切换 -->
+                <!-- Show模式Switch -->
                 <div class="setting-item">
                     <label for="display-mode-select">🖥️ ${t('displayMode.title') || 'Display Mode'}</label>
                     <select id="display-mode-select" class="setting-select">
@@ -1056,12 +1056,12 @@ export class CockpitHUD {
 
     <footer class="dashboard-footer">
         <div class="footer-content">
-            <span class="footer-text">Antigravity Cockpit (Self-Hosted)</span>
+            <span class="footer-text">Antigravity FuelGauge (Self-Hosted)</span>
         </div>
     </footer>
 
     <script nonce="${nonce}">
-        // 注入国际化文本
+        // 注入i18n文本
         window.__i18n = ${translationsJson};
         window.__autoTriggerI18n = ${translationsJson};
     </script>
@@ -1085,7 +1085,7 @@ export class CockpitHUD {
     }
 
     /**
-     * 生成语言选项 HTML
+     * 生成LanguageOption HTML
      */
     private generateLanguageOptions(): string {
         const locales = i18n.getSupportedLocales();
@@ -1096,5 +1096,5 @@ export class CockpitHUD {
     }
 }
 
-// 保持向后兼容的导出别名
+// 保持向后兼容的Export别名
 export { CockpitHUD as hud };

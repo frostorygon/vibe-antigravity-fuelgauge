@@ -1,35 +1,35 @@
 /**
- * Antigravity Cockpit - Announcement Types
- * 公告系统类型定义
+ * Antigravity FuelGauge - Announcement Types
+ * AnnouncementSystemType Definitions
  */
 
-/** 公告类型 */
+/** Announcement Types */
 export type AnnouncementType = 'feature' | 'warning' | 'info' | 'urgent';
 
-/** 公告操作类型 */
+/** Announcement操作类型 */
 export type AnnouncementActionType = 'tab' | 'url' | 'command';
 
-/** 公告操作 */
+/** Announcement操作 */
 export interface AnnouncementAction {
     /** 操作类型 */
     type: AnnouncementActionType;
     /** 目标（Tab ID / URL / 命令 ID） */
     target: string;
-    /** 按钮文字 */
+    /** Button文字 */
     label: string;
-    /** 命令参数（仅 type='command' 时有效） */
+    /** 命令Parameter（仅 type='command' 时Valid） */
     arguments?: unknown[];
 }
 
-/** 公告操作覆盖 */
+/** Announcement操作覆盖 */
 export interface AnnouncementActionOverride {
-    /** 版本范围 */
+    /** Version范围 */
     targetVersions: string;
     /** 覆盖操作 */
     action: AnnouncementAction | null;
 }
 
-/** 公告多语言内容 */
+/** Announcement多LanguageContent */
 export interface AnnouncementLocale {
     title?: string;
     summary?: string;
@@ -37,66 +37,66 @@ export interface AnnouncementLocale {
     actionLabel?: string;
 }
 
-/** 公告图片 */
+/** Announcement图片 */
 export interface AnnouncementImage {
     /** 图片 URL */
     url: string;
-    /** 图片标签（如 "QQ 群"、"微信群"） */
+    /** 图片Label（如 "QQ 群"、"微信群"） */
     label?: string;
     /** 图片替代文字 */
     alt?: string;
 }
 
-/** 单条公告 */
+/** 单条Announcement */
 export interface Announcement {
     /** 唯一标识 */
     id: string;
-    /** 公告类型 */
+    /** Announcement Types */
     type: AnnouncementType;
     /** 优先级（数值越大越优先） */
     priority: number;
-    /** 标题 */
+    /** Title */
     title: string;
-    /** 简短摘要（列表展示用） */
+    /** 简短摘要（List展示用） */
     summary: string;
-    /** 完整内容 */
+    /** 完整Content */
     content: string;
-    /** 操作按钮（可选） */
+    /** 操作Button（Optional） */
     action?: AnnouncementAction | null;
-    /** 操作覆盖（可选） */
+    /** 操作覆盖（Optional） */
     actionOverrides?: AnnouncementActionOverride[];
-    /** 目标版本范围（如 ">=1.6.0", "*" 表示所有） */
+    /** 目标Version范围（如 ">=1.6.0", "*" 表示所有） */
     targetVersions: string;
-    /** 目标语言列表（如 ["zh-cn", "zh-tw"], ["*"] 或留空表示所有语言） */
+    /** 目标LanguageList（如 ["zh-cn", "zh-tw"], ["*"] 或留空表示所有Language） */
     targetLanguages?: string[];
-    /** 是否仅显示一次（标记已读后不再弹） */
+    /** 是否仅Show一次（标记已读后不再弹） */
     showOnce: boolean;
-    /** 是否主动弹框 */
+    /** 是否主动Modal */
     popup: boolean;
-    /** 创建时间 */
+    /** CreateTime */
     createdAt: string;
-    /** 过期时间（可选） */
+    /** 过期Time（Optional） */
     expiresAt?: string | null;
-    /** 多语言支持（可选） */
+    /** 多Language支持（Optional） */
     locales?: { [key: string]: AnnouncementLocale };
-    /** 图片列表（可选） */
+    /** 图片List（Optional） */
     images?: AnnouncementImage[];
 }
 
-/** 公告 API 响应 */
+/** Announcement API Response */
 export interface AnnouncementResponse {
-    /** 数据版本 */
+    /** DataVersion */
     version: string;
-    /** 公告列表 */
+    /** AnnouncementList */
     announcements: Announcement[];
 }
 
-/** 公告状态（传递给 Webview） */
+/** AnnouncementState（传递给 Webview） */
 export interface AnnouncementState {
-    /** 所有公告 */
+    /** 所有Announcement */
     announcements: Announcement[];
-    /** 未读公告 ID 列表 */
+    /** 未读Announcement ID List */
     unreadIds: string[];
-    /** 需要弹框的未读公告（优先级最高的一条） */
+    /** 需要Modal的未读Announcement（优先级最高的一条） */
     popupAnnouncement: Announcement | null;
 }

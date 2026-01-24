@@ -1,101 +1,101 @@
 /**
- * Antigravity Cockpit - 类型定义
- * 完整的类型系统，避免使用 any
+ * Antigravity FuelGauge - Type Definitions
+ * 完整的类型System，避免使用 any
  */
 
-// ============ 配额相关类型 ============
+// ============ Quota相关类型 ============
 
-/** Prompt Credits 信息 */
+/** Prompt Credits Info */
 export interface PromptCreditsInfo {
     /** 可用积分 */
     available: number;
-    /** 每月配额 */
+    /** 每月Quota */
     monthly: number;
-    /** 已使用百分比 */
+    /** 已使用Percentage */
     usedPercentage: number;
-    /** 剩余百分比 */
+    /** RemainingPercentage */
     remainingPercentage: number;
 }
 
-/** 模型配额信息 */
+/** ModelQuotaInfo */
 export interface ModelQuotaInfo {
-    /** 显示标签 */
+    /** ShowLabel */
     label: string;
-    /** 模型 ID */
+    /** Model ID */
     modelId: string;
-    /** 剩余比例 (0-1) */
+    /** Remaining比例 (0-1) */
     remainingFraction?: number;
-    /** 剩余百分比 (0-100) */
+    /** RemainingPercentage (0-100) */
     remainingPercentage?: number;
     /** 是否已耗尽 */
     isExhausted: boolean;
-    /** 重置时间 */
+    /** ResetTime */
     resetTime: Date;
-    /** 距离重置的毫秒数 */
+    /** 距离Reset的毫秒数 */
     timeUntilReset: number;
-    /** 格式化的重置倒计时 */
+    /** Format的Reset倒计时 */
     timeUntilResetFormatted: string;
-    /** 格式化的重置时间显示 */
+    /** Format的ResetTimeShow */
     resetTimeDisplay: string;
-    /** 重置时间是否可信 */
+    /** ResetTime是否可信 */
     resetTimeValid?: boolean;
     /** 是否支持图片输入 */
     supportsImages?: boolean;
-    /** 是否为推荐模型 */
+    /** 是否为推荐Model */
     isRecommended?: boolean;
-    /** 标签标题（如 "New"） */
+    /** LabelTitle（如 "New"） */
     tagTitle?: string;
     /** 支持的 MIME 类型映射 */
     supportedMimeTypes?: Record<string, boolean>;
 }
 
-/** 配额分组 - 共享相同配额的模型集合 */
+/** QuotaGroup - 共享相同Quota的Model集合 */
 export interface QuotaGroup {
-    /** 分组唯一标识 (基于 remainingFraction + resetTime 生成) */
+    /** Group唯一标识 (基于 remainingFraction + resetTime 生成) */
     groupId: string;
-    /** 分组名称 (用户自定义或自动生成) */
+    /** Group名称 (UserCustom或自动生成) */
     groupName: string;
-    /** 分组内的模型列表 */
+    /** Group内的ModelList */
     models: ModelQuotaInfo[];
-    /** 共享的剩余百分比 */
+    /** 共享的RemainingPercentage */
     remainingPercentage: number;
-    /** 共享的重置时间 */
+    /** 共享的ResetTime */
     resetTime: Date;
-    /** 格式化的重置时间显示 */
+    /** Format的ResetTimeShow */
     resetTimeDisplay: string;
-    /** 格式化的重置倒计时 */
+    /** Format的Reset倒计时 */
     timeUntilResetFormatted: string;
     /** 是否已耗尽 */
     isExhausted: boolean;
 }
 
-/** 配额快照 */
+/** Quota快照 */
 export interface QuotaSnapshot {
-    /** 时间戳 */
+    /** Time戳 */
     timestamp: Date;
     /** Prompt Credits */
     promptCredits?: PromptCreditsInfo;
-    /** 用户信息 */
+    /** UserInfo */
     userInfo?: UserInfo;
-    /** 模型列表 */
+    /** ModelList */
     models: ModelQuotaInfo[];
-    /** 原始模型列表（未过滤） */
+    /** OriginalModelList（未Filter） */
     allModels?: ModelQuotaInfo[];
-    /** 配额分组 (开启分组功能时生成) */
+    /** QuotaGroup (开启Group功能时生成) */
     groups?: QuotaGroup[];
-    /** 连接状态 */
+    /** ConnectState */
     isConnected: boolean;
-    /** 错误信息 */
+    /** ErrorInfo */
     errorMessage?: string;
-    /** 本地账户邮箱（local 模式下使用远端 API 时） */
+    /** Local账户Email（local 模式下使用远端 API 时） */
     localAccountEmail?: string;
 }
 
-/** 配额健康状态 */
+/** Quota健康State */
 export enum QuotaLevel {
     /** 正常 (> 50%) */
     Normal = 'normal',
-    /** 警告 (20-50%) */
+    /** Warning (20-50%) */
     Warning = 'warning',
     /** 危险 (< 20%) */
     Critical = 'critical',
@@ -103,20 +103,20 @@ export enum QuotaLevel {
     Depleted = 'depleted',
 }
 
-// ============ API 响应类型 ============
+// ============ API Response类型 ============
 
-/** 模型或别名 */
+/** Model或别名 */
 export interface ModelOrAlias {
     model: string;
 }
 
-/** 配额信息 */
+/** QuotaInfo */
 export interface QuotaInfo {
     remainingFraction?: number;
     resetTime: string;
 }
 
-/** 客户端模型配置 */
+/** ClientModelConfig */
 export interface ClientModelConfig {
     label: string;
     modelOrAlias?: ModelOrAlias;
@@ -124,13 +124,13 @@ export interface ClientModelConfig {
     supportsImages?: boolean;
     isRecommended?: boolean;
     allowedTiers?: string[];
-    /** 标签标题（如 "New"） */
+    /** LabelTitle（如 "New"） */
     tagTitle?: string;
     /** 支持的 MIME 类型映射 */
     supportedMimeTypes?: Record<string, boolean>;
 }
 
-/** 团队配置 */
+/** 团队Config */
 export interface DefaultTeamConfig {
     allowMcpServers?: boolean;
     allowAutoRunCommands?: boolean;
@@ -138,7 +138,7 @@ export interface DefaultTeamConfig {
     [key: string]: boolean | string | number | undefined;
 }
 
-/** 计划信息 */
+/** 计划Info */
 export interface PlanInfo {
     teamsTier: string;
     planName: string;
@@ -159,7 +159,7 @@ export interface PlanInfo {
     cascadeCanAutoRunCommands?: boolean;
     canAllowCascadeInBackground?: boolean;
 
-    // 限制配置
+    // 限制Config
     maxNumChatInputTokens?: string | number;
     maxNumPremiumChatMessages?: string | number;
     maxCustomChatInstructionCharacters?: string | number;
@@ -167,38 +167,38 @@ export interface PlanInfo {
     maxLocalIndexSize?: string | number;
     monthlyFlexCreditPurchaseAmount?: number;
 
-    // 团队配置
+    // 团队Config
     defaultTeamConfig?: DefaultTeamConfig;
 
-    /** 扩展字段 - 支持 API 返回的其他属性 */
+    /** Extension字段 - 支持 API Return的其他属性 */
     [key: string]: string | number | boolean | object | undefined;
 }
 
-/** 计划状态 */
+/** 计划State */
 export interface PlanStatus {
     planInfo: PlanInfo;
     availablePromptCredits: number;
     availableFlowCredits: number;
 }
 
-/** 模型排序分组 */
+/** ModelSortGroup */
 export interface ModelSortGroup {
     modelLabels: string[];
 }
 
-/** 客户端模型排序 */
+/** ClientModelSort */
 export interface ClientModelSort {
     name: string;
     groups: ModelSortGroup[];
 }
 
-/** Cascade 模型配置数据 */
+/** Cascade ModelConfigData */
 export interface CascadeModelConfigData {
     clientModelConfigs: ClientModelConfig[];
     clientModelSorts?: ClientModelSort[];
 }
 
-/** 用户状态 */
+/** UserState */
 export interface UserStatus {
     name: string;
     email: string;
@@ -214,56 +214,56 @@ export interface UserStatus {
     };
 }
 
-/** 服务端用户状态响应 */
+/** Service端UserStateResponse */
 export interface ServerUserStatusResponse {
     userStatus: UserStatus;
-    /** 服务端返回的错误消息 */
+    /** Service端Return的ErrorMessage */
     message?: string;
-    /** 服务端返回的错误代码 */
+    /** Service端Return的Error代码 */
     code?: string;
 }
 
-// ============ 进程检测类型 ============
+// ============ Process检测类型 ============
 
-/** 环境扫描结果 */
+/** EnvironmentScan结果 */
 export interface EnvironmentScanResult {
-    /** 扩展端口 */
+    /** ExtensionPort */
     extensionPort: number;
-    /** 连接端口 */
+    /** ConnectPort */
     connectPort: number;
     /** CSRF Token */
     csrfToken: string;
 }
 
-/** 扫描诊断信息 */
+/** Scan诊断Info */
 export interface ScanDiagnostics {
-    /** 扫描方式 */
+    /** Scan方式 */
     scan_method: 'process_name' | 'keyword' | 'unknown';
-    /** 目标进程名 */
+    /** 目标Process名 */
     target_process: string;
-    /** 扫描尝试次数 */
+    /** Scan尝试次数 */
     attempts: number;
-    /** 候选进程数量 */
+    /** 候选Process数量 */
     found_candidates: number;
-    /** 候选端口列表 */
+    /** 候选PortList */
     ports?: number[];
-    /** 通过验证的端口 */
+    /** 通过Validate的Port */
     verified_port?: number | null;
-    /** 是否验证成功 */
+    /** 是否ValidateSuccess */
     verification_success?: boolean;
 }
 
-/** 进程信息 */
+/** ProcessInfo */
 export interface ProcessInfo {
-    /** 进程 ID */
+    /** Process ID */
     pid: number;
-    /** 扩展端口 */
+    /** ExtensionPort */
     extensionPort: number;
     /** CSRF Token */
     csrfToken: string;
 }
 
-/** 用户详细信息 */
+/** User详细Info */
 export interface UserInfo {
     name: string;
     email: string;
@@ -305,7 +305,7 @@ export interface UserInfo {
 
 // ============ UI 相关类型 ============
 
-/** Webview 消息类型 */
+/** Webview Message类型 */
 export type WebviewMessageType =
     | 'init'
     | 'refresh'
@@ -374,78 +374,78 @@ export type WebviewMessageType =
     | 'executeCommand'
     | 'updateVisibleModels';
 
-/** Webview 消息 */
+/** Webview Message */
 export interface WebviewMessage {
     command: WebviewMessageType;
     modelId?: string;
     order?: string[];
-    /** 分组 ID */
+    /** Group ID */
     groupId?: string;
-    /** 分组新名称 */
+    /** Group新名称 */
     groupName?: string;
-    /** 分组当前名称 (用于 promptRenameGroup) */
+    /** GroupCurrent名称 (用于 promptRenameGroup) */
     currentName?: string;
-    /** 分组内所有模型 ID */
+    /** Group内所有Model ID */
     modelIds?: string[];
-    /** 是否启用通知 (updateThresholds) */
+    /** 是否EnableNotify (updateThresholds) */
     notificationEnabled?: boolean;
-    /** 警告阈值 (updateThresholds) */
+    /** WarningThreshold (updateThresholds) */
     warningThreshold?: number;
-    /** 危险阈值 (updateThresholds) */
+    /** 危险Threshold (updateThresholds) */
     criticalThreshold?: number;
-    /** 状态栏显示格式 (updateStatusBarFormat) */
+    /** State栏Show格式 (updateStatusBarFormat) */
     statusBarFormat?: string;
-    /** 配额来源 (updateQuotaSource) */
+    /** Quota来源 (updateQuotaSource) */
     quotaSource?: 'local' | 'authorized';
-    /** 显示模式 (updateDisplayMode) */
+    /** Show模式 (updateDisplayMode) */
     displayMode?: 'webview' | 'quickpick';
-    /** 数据遮罩状态 (updateDataMasked) */
+    /** Data遮罩State (updateDataMasked) */
     dataMasked?: boolean;
-    /** Antigravity Tools 同步开关 */
+    /** Antigravity Tools Sync开关 */
     enabled?: boolean;
-    /** 语言设置 (updateLanguage) */
+    /** LanguageSet (updateLanguage) */
     language?: string;
-    /** 自定义分组映射 (saveCustomGrouping) */
+    /** CustomGroup映射 (saveCustomGrouping) */
     customGroupMappings?: Record<string, string>;
-    /** 自定义分组名称 (saveCustomGrouping) */
+    /** CustomGroup名称 (saveCustomGrouping) */
     customGroupNames?: Record<string, string>;
-    /** 可见模型列表 */
+    /** VisibleModelList */
     visibleModels?: string[];
-    /** Antigravity Tools JSON 导入 */
+    /** Antigravity Tools JSON Import */
     jsonText?: string;
     // Auto Trigger
     /** Tab 名称 (tabChanged) */
     tab?: string;
-    /** 调度配置 (autoTrigger.saveSchedule) */
+    /** 调度Config (autoTrigger.saveSchedule) */
     schedule?: ScheduleConfig;
     /** Crontab 表达式 (autoTrigger.validateCrontab) */
     crontab?: string;
-    /** 手动测试模型列表 (autoTrigger.test) */
+    /** 手动TestModelList (autoTrigger.test) */
     models?: string[];
     /** 最大输出 token (autoTrigger.test) */
     maxOutputTokens?: number;
-    /** 账号邮箱 (autoTrigger.removeAccount, autoTrigger.switchAccount) */
+    /** AccountEmail (autoTrigger.removeAccount, autoTrigger.switchAccount) */
     email?: string;
     // Announcements
-    /** 公告 ID (announcement.markAsRead) */
+    /** Announcement ID (announcement.markAsRead) */
     id?: string;
     /** URL (openUrl) */
     url?: string;
     /** 命令 ID (executeCommand) */
     commandId?: string;
-    /** 命令参数 (executeCommand) */
+    /** 命令Parameter (executeCommand) */
     commandArgs?: unknown[];
-    /** 仅导入不切换 (antigravityToolsSync.importConfirm) */
+    /** 仅Import不Switch (antigravityToolsSync.importConfirm) */
     importOnly?: boolean;
-    /** 仅切换不导入 (antigravityToolsSync.importConfirm) */
+    /** 仅Switch不Import (antigravityToolsSync.importConfirm) */
     switchOnly?: boolean;
-    /** 目标切换邮箱 (antigravityToolsSync.importConfirm) */
+    /** 目标SwitchEmail (antigravityToolsSync.importConfirm) */
     targetEmail?: string;
-    /** 是否覆盖已有账号 (autoTrigger.importLocalConfirm) */
+    /** 是否覆盖已有Account (autoTrigger.importLocalConfirm) */
     overwrite?: boolean;
 }
 
-/** 调度配置 */
+/** 调度Config */
 export interface ScheduleConfig {
     enabled: boolean;
     repeatMode: 'daily' | 'weekly' | 'interval';
@@ -460,7 +460,7 @@ export interface ScheduleConfig {
     maxOutputTokens?: number;
 }
 
-/** Dashboard 授权状态 */
+/** Dashboard AuthorizationState */
 export interface DashboardAuthorizationStatus {
     isAuthorized: boolean;
     email?: string;
@@ -474,94 +474,94 @@ export interface DashboardAuthorizationStatus {
     activeAccount?: string;
 }
 
-/** Dashboard 配置 */
+/** Dashboard Config */
 export interface DashboardConfig {
-    /** 是否显示 Prompt Credits */
+    /** 是否Show Prompt Credits */
     showPromptCredits: boolean;
-    /** 置顶的模型 */
+    /** Pin的Model */
     pinnedModels: string[];
-    /** 模型顺序 */
+    /** Model顺序 */
     modelOrder: string[];
-    /** 模型自定义名称映射 (modelId -> displayName) */
+    /** ModelCustom名称映射 (modelId -> displayName) */
     modelCustomNames?: Record<string, string>;
-    /** 可见模型列表（为空时显示全部） */
+    /** VisibleModelList（为空时Show全部） */
     visibleModels?: string[];
-    /** 是否启用分组显示 */
+    /** 是否EnableGroupShow */
     groupingEnabled: boolean;
-    /** 分组自定义名称映射 (modelId -> groupName) */
+    /** GroupCustom名称映射 (modelId -> groupName) */
     groupCustomNames: Record<string, string>;
-    /** 是否在状态栏显示分组 */
+    /** 是否在State栏ShowGroup */
     groupingShowInStatusBar: boolean;
-    /** 置顶的分组 */
+    /** Pin的Group */
     pinnedGroups: string[];
-    /** 分组顺序 */
+    /** Group顺序 */
     groupOrder: string[];
-    /** 刷新冷却时间（秒） */
+    /** RefreshCooldownTime（秒） */
     refreshInterval: number;
-    /** 是否启用通知 */
+    /** 是否EnableNotify */
     notificationEnabled: boolean;
-    /** 警告阈值 (%) */
+    /** WarningThreshold (%) */
     warningThreshold?: number;
-    /** 危险阈值 (%) */
+    /** 危险Threshold (%) */
     criticalThreshold?: number;
-    /** 最后成功更新时间 */
+    /** 最后SuccessUpdateTime */
     lastSuccessfulUpdate?: Date | null;
-    /** 状态栏显示格式 */
+    /** State栏Show格式 */
     statusBarFormat?: string;
-    /** 是否隐藏计划详情面板 */
+    /** 是否Hidden计划DetailsPanel */
     profileHidden?: boolean;
-    /** 配额来源 (local | authorized) */
+    /** Quota来源 (local | authorized) */
     quotaSource?: string;
-    /** 是否已完成授权 */
+    /** 是否CompletedAuthorization */
     authorizedAvailable?: boolean;
-    /** 授权状态详情 */
+    /** AuthorizationStateDetails */
     authorizationStatus?: DashboardAuthorizationStatus;
-    /** 显示模式 (webview | quickpick) */
+    /** Show模式 (webview | quickpick) */
     displayMode?: string;
-    /** 是否遮罩敏感数据 */
+    /** 是否遮罩敏感Data */
     dataMasked?: boolean;
     /** External URL */
     url?: string;
-    /** 分组映射 (modelId -> groupId) */
+    /** Group映射 (modelId -> groupId) */
     groupMappings?: Record<string, string>;
-    /** 语言设置（'auto' 跟随 VS Code，或具体语言代码） */
+    /** LanguageSet（'auto' 跟随 VS Code，或具体Language代码） */
     language?: string;
-    /** 是否开启 AntigravityTools 同步（来自 globalState） */
+    /** 是否开启 AntigravityTools Sync（来自 globalState） */
     antigravityToolsSyncEnabled?: boolean;
-    /** 是否开启 AntigravityTools 自动切换（来自 globalState） */
+    /** 是否开启 AntigravityTools 自动Switch（来自 globalState） */
     antigravityToolsAutoSwitchEnabled?: boolean;
 }
 
-/** 状态栏更新数据 */
+/** State栏UpdateData */
 export interface StatusBarUpdate {
-    /** 显示文本 */
+    /** Show文本 */
     text: string;
-    /** 工具提示 */
+    /** 工具Tooltip */
     tooltip: string;
     /** 背景颜色 */
     backgroundColor?: string;
-    /** 最低百分比（用于颜色判断） */
+    /** 最低Percentage（用于颜色判断） */
     minPercentage: number;
 }
 
-// ============ 平台策略类型 ============
+// ============ Platform Strategies类型 ============
 
-/** 平台类型 */
+/** Platform类型 */
 export type PlatformType = 'windows' | 'darwin' | 'linux';
 
-/** 平台策略接口 */
+/** Platform StrategiesAPI */
 export interface PlatformStrategy {
-    /** 获取进程列表命令 */
+    /** GetProcessList命令 */
     getProcessListCommand(processName: string): string;
-    /** 解析进程信息 */
+    /** ParseProcessInfo */
     parseProcessInfo(stdout: string): ProcessInfo[];
-    /** 获取端口列表命令 */
+    /** GetPortList命令 */
     getPortListCommand(pid: number): string;
-    /** 解析监听端口 */
+    /** ParseListenPort */
     parseListeningPorts(stdout: string): number[];
-    /** 获取诊断命令（列出所有相关进程，用于调试） */
+    /** Get诊断命令（列出所有相关Process，用于Debug） */
     getDiagnosticCommand(): string;
-    /** 获取错误信息 */
+    /** GetErrorInfo */
     getErrorMessages(): {
         processNotFound: string;
         commandNotAvailable: string;

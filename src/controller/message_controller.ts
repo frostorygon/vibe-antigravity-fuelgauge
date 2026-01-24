@@ -15,11 +15,11 @@ import { antigravityToolsSyncService } from '../antigravityTools_sync';
 import { cockpitToolsWs, AccountInfo } from '../services/cockpitToolsWs';
 
 export class MessageController {
-    // 跟踪已通知的模型以避免重复弹窗 (虽然主要逻辑在 TelemetryController，但 CheckAndNotify 可能被消息触发吗? 不, 主要是 handleMessage)
-    // 这里主要是处理前端发来的指令
+    // 跟踪已Notify的Model以避免重复弹窗 (虽然主要逻辑在 TelemetryController，但 CheckAndNotify 可能被Message触发吗? 不, 主要是 handleMessage)
+    // 这里主要是Handle前端发来的指令
     private context: vscode.ExtensionContext;
     
-    // 导入取消令牌
+    // ImportCancelToken
     private importCancelToken: { cancelled: boolean } | null = null;
 
     constructor(
@@ -43,11 +43,11 @@ export class MessageController {
 
         logger.info(`User changed quota source: ${previousSource} -> ${source}`);
         await configService.updateConfig('quotaSource', source);
-        // 验证保存是否成功
+        // ValidateSave是否Success
         const savedSource = configService.getConfig().quotaSource;
         logger.info(`QuotaSource saved: requested=${source}, actual=${savedSource}`);
 
-        // 发送 loading 状态提示
+        // Send loading StateTooltip
         this.hud.sendMessage({
             type: 'quotaSourceLoading',
             data: { source },
@@ -57,7 +57,7 @@ export class MessageController {
             tab: 'quota',
         });
 
-        // 如果配额来源发生变化，触发完整初始化流程
+        // 如果Quota来源发生变化，触发完整Initialize流程
         if (previousSource !== source) {
             if (source === 'local') {
                 await this.onRetry();
@@ -77,7 +77,7 @@ export class MessageController {
     }
 
     private setupMessageHandling(): void {
-        // 设置 autoTriggerController 的消息处理器，使其能够推送状态更新到 webview
+        // Set autoTriggerController 的MessageHandle器，使其能够推送StateUpdate到 webview
         autoTriggerController.setMessageHandler((message) => {
             if (message.type === 'auto_trigger_state_update') {
                 this.hud.sendMessage({
@@ -143,7 +143,7 @@ export class MessageController {
 
                 case 'refresh':
                     logger.info('User triggered manual refresh');
-                    // 尝试确保 WebSocket 连接（如果断开则触发重连）
+                    // 尝试确保 WebSocket Connect（如果Disconnect则触发重连）
                     cockpitToolsWs.ensureConnected();
                     this.reactor.syncTelemetry();
                     {
@@ -163,7 +163,7 @@ export class MessageController {
                         logger.info('Dashboard initialized (no cache, performing full sync)');
                         this.reactor.syncTelemetry();
                     }
-                    // 发送公告状态
+                    // SendAnnouncementState
                     {
                         const annState = await announcementService.getState();
                         this.hud.sendMessage({
@@ -192,14 +192,14 @@ export class MessageController {
                 case 'toggleGrouping': {
                     logger.info('User toggled grouping display');
                     const enabled = await configService.toggleGroupingEnabled();
-                    // 用户期望：切换到分组模式时，状态栏默认也显示分组
+                    // User期望：Switch到Group模式时，State栏Default也ShowGroup
                     if (enabled) {
                         const config = configService.getConfig();
                         if (!config.groupingShowInStatusBar) {
                             await configService.updateConfig('groupingShowInStatusBar', true);
                         }
 
-                        // 首次开启分组时（groupMappings 为空），自动执行分组
+                        // 首次开启Group时（groupMappings 为空），自动ExecuteGroup
                         if (Object.keys(config.groupMappings).length === 0) {
                             const latestSnapshot = this.reactor.getLatestSnapshot();
                             if (latestSnapshot && latestSnapshot.models.length > 0) {
@@ -209,7 +209,7 @@ export class MessageController {
                             }
                         }
                     }
-                    // 使用缓存数据重新渲染
+                    // 使用CacheData重新Render
                     this.reactor.reprocess();
                     break;
                 }
@@ -218,7 +218,7 @@ export class MessageController {
                     if (message.modelIds && message.groupName) {
                         logger.info(`User renamed group to: ${message.groupName}`);
                         await configService.updateGroupName(message.modelIds, message.groupName);
-                        // 使用缓存数据重新渲染
+                        // 使用CacheData重新Render
                         this.reactor.reprocess();
                     } else {
                         logger.warn('renameGroup signal missing required data');
@@ -264,10 +264,10 @@ export class MessageController {
 
                 case 'autoGroup': {
                     logger.info('User triggered auto-grouping');
-                    // 获取最新的快照数据
+                    // GetLatest的快照Data
                     const latestSnapshot = this.reactor.getLatestSnapshot();
                     if (latestSnapshot && latestSnapshot.models.length > 0) {
-                        // 计算新的分组映射
+                        // 计算新的Group映射
                         const newMappings = ReactorCore.calculateGroupMappings(latestSnapshot.models);
                         await configService.updateGroupMappings(newMappings);
                         logger.info(`Auto-grouped ${Object.keys(newMappings).length} models`);
@@ -275,7 +275,7 @@ export class MessageController {
                         // 清除之前的 pinnedGroups（因为 groupId 已变化）
                         await configService.updateConfig('pinnedGroups', []);
 
-                        // 重新处理数据以刷新 UI
+                        // 重新HandleData以Refresh UI
                         this.reactor.reprocess();
                     } else {
                         logger.warn('No snapshot data available for auto-grouping');
@@ -284,7 +284,7 @@ export class MessageController {
                 }
 
                 case 'updateNotificationEnabled':
-                    // 处理通知开关变更
+                    // HandleNotify开关变更
                     if (message.notificationEnabled !== undefined) {
                         const enabled = message.notificationEnabled as boolean;
                         await configService.updateConfig('notificationEnabled', enabled);
@@ -296,7 +296,7 @@ export class MessageController {
                     break;
 
                 case 'updateThresholds':
-                    // 处理阈值更新
+                    // HandleThresholdUpdate
                     if (message.warningThreshold !== undefined && message.criticalThreshold !== undefined) {
                         const warningVal = message.warningThreshold as number;
                         const criticalVal = message.criticalThreshold as number;
@@ -309,10 +309,10 @@ export class MessageController {
                                 t('threshold.updated', { value: `Warning: ${warningVal}%, Critical: ${criticalVal}%` }),
                             );
                             // 注意：notifiedModels 清理逻辑通常在 TelemetryController，这里可能无法直接访问
-                            // 我们可以让 reactor 重新发送数据，如果 TelemetryController 监听了 configChange 或数据变化，会自动处理？
-                            // 最好是这里只更新配置，reprocess 会触发 reactor 的逻辑。
-                            // 但 notifiedModels 是内存状态。
-                            // 临时方案：不清理，或者通过 reactor 发送一个事件？
+                            // 我们可以让 reactor 重新SendData，如果 TelemetryController Listen了 configChange 或Data变化，会自动Handle？
+                            // 最好是这里只Update config，reprocess 会触发 reactor 的逻辑。
+                            // 但 notifiedModels 是内存State。
+                            // Temporary方案：不清理，或者通过 reactor Send一个Event？
                             // 观察 extension.ts，'notifiedModels.clear()' 是直接调用的。
                             // 我们可以将 notifiedModels 移入 TelemetryController 并提供一个 reset 方法。
                             // 这里先保留注释。
@@ -327,7 +327,7 @@ export class MessageController {
                     if (message.modelId && message.groupName !== undefined) {
                         logger.info(`User renamed model ${message.modelId} to: ${message.groupName}`);
                         await configService.updateModelName(message.modelId, message.groupName);
-                        // 使用缓存数据重新渲染
+                        // 使用CacheData重新Render
                         this.reactor.reprocess();
                     } else {
                         logger.warn('renameModel signal missing required data');
@@ -338,7 +338,7 @@ export class MessageController {
                     if (message.statusBarFormat) {
                         logger.info(`User changed status bar format to: ${message.statusBarFormat}`);
                         await configService.updateConfig('statusBarFormat', message.statusBarFormat);
-                        // 立即刷新状态栏
+                        // 立即RefreshState栏
                         this.reactor.reprocess();
                     } else {
                         logger.warn('updateStatusBarFormat signal missing statusBarFormat');
@@ -346,7 +346,7 @@ export class MessageController {
                     break;
 
                 case 'toggleProfile':
-                    // 切换计划详情显示/隐藏
+                    // Switch计划DetailsShow/Hidden
                     logger.info('User toggled profile visibility');
                     {
                         const currentConfig = configService.getConfig();
@@ -361,9 +361,9 @@ export class MessageController {
                         await configService.updateConfig('displayMode', message.displayMode);
 
                         if (message.displayMode === 'quickpick') {
-                            // 1. 关闭 Webview
+                            // 1. Close Webview
                             this.hud.dispose();
-                            // 2. 刷新状态栏
+                            // 2. RefreshState栏
                             this.reactor.reprocess();
                             // 3. 立即弹出 QuickPick (通过命令)
                             vscode.commands.executeCommand('agCockpit.open');
@@ -384,7 +384,7 @@ export class MessageController {
 
 
                 case 'updateDataMasked':
-                    // 更新数据遮罩状态
+                    // UpdateData遮罩State
                     if (message.dataMasked !== undefined) {
                         logger.info(`User changed data masking to: ${message.dataMasked}`);
                         await configService.updateConfig('dataMasked', message.dataMasked);
@@ -408,12 +408,12 @@ export class MessageController {
                         const targetEmail = message.targetEmail as string | undefined;
 
                         if (switchOnly && targetEmail) {
-                            // 纯切换场景：直接调用快速切换，无需网络请求
+                            // 纯Switch场景：直接调用快速Switch，无需网络Request
                             await antigravityToolsSyncService.switchOnly(targetEmail);
                             const state = await autoTriggerController.getState();
                             this.hud.sendMessage({ type: 'autoTriggerState', data: state });
                             this.hud.sendMessage({ type: 'antigravityToolsSyncComplete', data: { success: true } });
-                            // 修复：切换账号后必须强制执行 syncTelemetry 来获取新账号配额，而不是 reprocess 旧缓存
+                            // 修复：Switch account后必须强制Execute syncTelemetry 来Get新AccountQuota，而不是 reprocess 旧Cache
                             if (configService.getConfig().quotaSource === 'authorized') {
                                 const usedCache = await this.reactor.tryUseQuotaCache('authorized', targetEmail);
                                 if (!usedCache) {
@@ -422,10 +422,10 @@ export class MessageController {
                             }
                             vscode.window.showInformationMessage(
                                 t('autoTrigger.accountSwitched', { email: targetEmail }) 
-                                || `已切换至账号: ${targetEmail}`,
+                                || `已Switch至Account: ${targetEmail}`,
                             );
                         } else {
-                            // 需要导入的场景
+                            // 需要Import的场景
                             await this.performAntigravityToolsImport(activeEmail, false, importOnly);
                         }
                     }
@@ -435,7 +435,7 @@ export class MessageController {
                     if (typeof message.jsonText === 'string') {
                         await this.performAntigravityToolsJsonImport(message.jsonText);
                     } else {
-                        const err = 'JSON 内容为空';
+                        const err = 'JSON Content为空';
                         this.hud.sendMessage({
                             type: 'antigravityToolsSyncComplete',
                             data: { success: false, error: err },
@@ -445,10 +445,10 @@ export class MessageController {
                     break;
 
                 case 'antigravityToolsSync.cancel':
-                    // 用户取消导入
+                    // UserCancelImport
                     if (this.importCancelToken) {
                         this.importCancelToken.cancelled = true;
-                        logger.info('[AntigravityToolsSync] 用户取消了导入操作');
+                        logger.info('[AntigravityToolsSync] UserCancel了Import操作');
                     }
                     break;
 
@@ -480,38 +480,38 @@ export class MessageController {
                     break;
 
                 case 'antigravityToolsSync.switchToClient':
-                    // 切换至当前登录账户
+                    // Switch至Current登录账户
                     await this.handleSwitchToClientAccount();
                     break;
 
                 case 'updateLanguage':
-                    // 更新语言设置
+                    // UpdateLanguageSet
                     if (message.language !== undefined) {
                         const rawLanguage = String(message.language);
                         const newLanguage = normalizeLocaleInput(rawLanguage);
                         logger.info(`User changed language to: ${newLanguage}`);
                         await configService.updateConfig('language', newLanguage);
-                        // 应用新语言设置
+                        // 应用新LanguageSet
                         i18n.applyLanguageSetting(newLanguage);
                         const languageForSync = newLanguage === 'auto' ? i18n.getLocale() : newLanguage;
                         
-                        // 同步语言到桌面端
+                        // SyncLanguage到桌面端
                         if (cockpitToolsWs.isConnected) {
-                            // 在线：通过 WebSocket 同步
+                            // Online：通过 WebSocket Sync
                             const syncResult = await cockpitToolsWs.setLanguage(languageForSync, 'extension');
                             if (!syncResult.success) {
-                                logger.warn(`[WS] 同步语言到桌面端失败: ${syncResult.message}`);
+                                logger.warn(`[WS] SyncLanguage到桌面端Failed: ${syncResult.message}`);
                             }
                         } else {
-                            // 离线：写入共享文件，等桌面端启动时读取
+                            // Offline：写入共享文件，等桌面端Start时读取
                             const { writeSyncSetting } = await import('../services/syncSettings');
                             writeSyncSetting('language', languageForSync);
-                            logger.info(`[SyncSettings] 语言写入共享文件（离线模式）: ${languageForSync}`);
+                            logger.info(`[SyncSettings] Language写入共享文件（Offline模式）: ${languageForSync}`);
                         }
                         
-                        // 关闭当前面板并重新打开
+                        // CloseCurrentPanel并重新Open
                         this.hud.dispose();
-                        // 短暂延迟后重新打开面板，确保旧面板完全关闭
+                        // 短暂Delay后重新OpenPanel，确保旧Panel完全Close
                         setTimeout(() => {
                             vscode.commands.executeCommand('agCockpit.open');
                         }, 100);
@@ -519,7 +519,7 @@ export class MessageController {
                     break;
 
                 case 'saveCustomGrouping': {
-                    // 保存自定义分组
+                    // SaveCustomGroup
                     const { customGroupMappings, customGroupNames } = message;
                     if (customGroupMappings) {
                         logger.info(`User saved custom grouping: ${Object.keys(customGroupMappings).length} models`);
@@ -528,12 +528,12 @@ export class MessageController {
                         // 清除之前的 pinnedGroups（因为 groupId 可能已变化）
                         await configService.updateConfig('pinnedGroups', []);
 
-                        // 保存分组名称（如果有）
+                        // SaveGroup名称（如果有）
                         if (customGroupNames) {
                             await configService.updateConfig('groupingCustomNames', customGroupNames);
                         }
 
-                        // 刷新 UI
+                        // Refresh UI
                         this.reactor.reprocess();
                     }
                     break;
@@ -541,7 +541,7 @@ export class MessageController {
 
                 // ============ Auto Trigger ============
                 case 'tabChanged':
-                    // Tab 切换时，如果切到自动触发 Tab，发送状态更新
+                    // Tab Switch时，如果切到Auto Trigger Tab，SendStateUpdate
                     if (message.tab === 'auto-trigger') {
                         logger.debug('Switched to Auto Trigger tab');
                         const state = await autoTriggerController.getState();
@@ -609,12 +609,12 @@ export class MessageController {
                 case 'autoTrigger.test':
                     logger.info('User triggered manual test');
                     try {
-                        // 从消息中获取自定义模型列表
+                        // 从Message中GetCustomModelList
                         const rawModels = (message as { models?: unknown }).models;
                         const testModels = Array.isArray(rawModels)
                             ? rawModels.filter((model): model is string => typeof model === 'string' && model.length > 0)
                             : undefined;
-                        // 获取自定义唤醒词
+                        // GetCustomWakeup词
                         const customPrompt = (message as { customPrompt?: string }).customPrompt;
                         const rawMaxOutputTokens = (message as { maxOutputTokens?: unknown }).maxOutputTokens;
                         const parsedMaxOutputTokens = typeof rawMaxOutputTokens === 'number'
@@ -636,7 +636,7 @@ export class MessageController {
                             data: state,
                         });
                         if (result.success) {
-                            // 显示成功消息和 AI 回复
+                            // ShowSuccessMessage和 AI 回复
                             const successMsg = t('autoTrigger.triggerSuccess').replace('{duration}', String(result.duration));
                             const responsePreview = result.response
                                 ? `\n${result.response.substring(0, 200)}${result.response.length > 200 ? '...' : ''}`
@@ -750,37 +750,37 @@ export class MessageController {
                     break;
 
                 case 'autoTrigger.switchLoginAccount':
-                    // 切换登录账户（实际切换客户端账户，需要通知 Cockpit Tools）
+                    // Switch登录账户（实际SwitchClient账户，需要Notify Cockpit Tools）
                     if (message.email) {
                         logger.info(`User switching login account to: ${message.email}`);
                         
-                        // 检查 WebSocket 连接状态
+                        // Check WebSocket ConnectState
                         if (!cockpitToolsWs.isConnected) {
                             const action = await vscode.window.showWarningMessage(
-                                'Cockpit Tools 未运行，无法切换账号',
-                                '启动 Cockpit Tools',
+                                'Cockpit Tools 未Running，无法Switch account',
+                                'Start Cockpit Tools',
                                 '下载 Cockpit Tools',
                             );
                             
-                            if (action === '启动 Cockpit Tools') {
+                            if (action === 'Start Cockpit Tools') {
                                 vscode.commands.executeCommand('agCockpit.accountTree.openManager');
                             } else if (action === '下载 Cockpit Tools') {
-                                vscode.env.openExternal(vscode.Uri.parse('https://github.com/jlcodes99/antigravity-cockpit-tools/releases'));
+                                vscode.env.openExternal(vscode.Uri.parse('https://github.com/self-hosted/antigravity-cockpit-tools/releases'));
                             }
                             return;
                         }
                         
                         try {
-                            // 通过 WebSocket 通知 Cockpit Tools 切换账号
+                            // 通过 WebSocket Notify Cockpit Tools Switch account
                             const resp = await cockpitToolsWs.getAccounts();
                             const account = resp.accounts.find((a: AccountInfo) => a.email === message.email);
                             
                             if (account && account.id) {
                                 const result = await cockpitToolsWs.switchAccount(account.id);
                                 if (result.success) {
-                                    vscode.window.showInformationMessage(t('autoTrigger.switchLoginSuccess') || `已切换登录账户至 ${message.email}`);
+                                    vscode.window.showInformationMessage(t('autoTrigger.switchLoginSuccess') || `已Switch登录账户至 ${message.email}`);
                                 } else {
-                                    vscode.window.showErrorMessage(t('autoTrigger.switchLoginFailed') || `切换登录账户失败: ${result.message}`);
+                                    vscode.window.showErrorMessage(t('autoTrigger.switchLoginFailed') || `Switch登录账户Failed: ${result.message}`);
                                 }
                             } else {
                                 vscode.window.showErrorMessage(t('autoTrigger.accountNotFound') || '未找到该账户');
@@ -788,7 +788,7 @@ export class MessageController {
                         } catch (error) {
                             const err = error instanceof Error ? error : new Error(String(error));
                             logger.error(`Switch login account failed: ${err.message}`);
-                            vscode.window.showErrorMessage(t('autoTrigger.switchLoginFailed') || `切换登录账户失败: ${err.message}`);
+                            vscode.window.showErrorMessage(t('autoTrigger.switchLoginFailed') || `Switch登录账户Failed: ${err.message}`);
                         }
                     } else {
                         logger.warn('switchLoginAccount missing email');
@@ -796,11 +796,11 @@ export class MessageController {
                     break;
 
                 case 'autoTrigger.reauthorizeAccount':
-                    // 重新授权指定账号（先删除再重新授权）
+                    // 重新Authorization指定Account（先Delete再重新Authorization）
                     if (message.email) {
                         logger.info(`User reauthorizing account: ${message.email}`);
                         try {
-                            // 重新走授权流程，会覆盖该账号的 token
+                            // 重新走Authorization流程，会覆盖该Account的 token
                             await autoTriggerController.reauthorizeAccount(message.email);
                             const state = await autoTriggerController.getState();
                             this.hud.sendMessage({
@@ -837,7 +837,7 @@ export class MessageController {
                     if (message.id) {
                         await announcementService.markAsRead(message.id);
                         logger.debug(`Marked announcement as read: ${message.id}`);
-                        // 更新前端状态
+                        // Update前端State
                         const state = await announcementService.getState();
                         this.hud.sendMessage({
                             type: 'announcementState',
@@ -939,7 +939,7 @@ export class MessageController {
     }
 
     /**
-     * 读取 AntigravityTools 账号，必要时弹框提示用户确认
+     * 读取 AntigravityTools Account，必要时ModalTooltipUserConfirm
      * @param isAuto 是否自动模式
      */
     private async handleAntigravityToolsImport(isAuto: boolean): Promise<void> {
@@ -952,10 +952,10 @@ export class MessageController {
             const detection = await antigravityToolsSyncService.detect();
             const activeEmail = await credentialStorage.getActiveAccount();
             
-            // 场景 A：未检测到 AntigravityTools 数据
+            // 场景 A：未检测到 AntigravityTools Data
             if (!detection || !detection.currentEmail) {
                 if (!isAuto) {
-                    // 手动触发时，提示未检测到
+                    // 手动触发时，Tooltip未检测到
                     this.hud.sendMessage({
                         type: 'antigravityToolsSyncPrompt',
                         data: {
@@ -970,13 +970,13 @@ export class MessageController {
                 ? detection.currentEmail.toLowerCase() === activeEmail.toLowerCase()
                 : false;
 
-            // 场景 B：有新账户需要导入
+            // 场景 B：有新账户需要Import
             if (detection.newEmails.length > 0) {
                 if (isAuto) {
                     if (autoSyncEnabled) {
-                        // 自动模式：根据面板可见性决定弹框或静默
+                        // 自动模式：根据PanelVisible性决定Modal或静默
                         if (this.hud.isVisible()) {
-                            // 面板可见，弹框 + 自动确认
+                            // PanelVisible，Modal + 自动Confirm
                             this.hud.sendMessage({
                                 type: 'antigravityToolsSyncPrompt',
                                 data: {
@@ -989,17 +989,17 @@ export class MessageController {
                                 },
                             });
                         } else {
-                            // 面板不可见，静默导入
+                            // Panel不Visible，静默Import
                             await this.performAntigravityToolsImport(activeEmail, true, !autoSwitchEnabled);
                             vscode.window.showInformationMessage(
                                 t('antigravityToolsSync.autoImported', { email: detection.currentEmail }) 
-                                || `已自动同步账户: ${detection.currentEmail}`,
+                                || `已自动Sync账户: ${detection.currentEmail}`,
                             );
                         }
                         return;
                     }
                 } else {
-                    // 手动模式，弹框让用户选择
+                    // 手动模式，Modal让UserSelect
                     this.hud.sendMessage({
                         type: 'antigravityToolsSyncPrompt',
                         data: {
@@ -1016,10 +1016,10 @@ export class MessageController {
                 }
             }
 
-            // 场景 C：无新增，且账号一致则无需切换
+            // 场景 C：无新增，且Account一致则无需Switch
             if (sameAccount) {
                 if (!isAuto) {
-                    vscode.window.showInformationMessage(t('antigravityToolsSync.alreadySynced') || '已同步，无需切换');
+                    vscode.window.showInformationMessage(t('antigravityToolsSync.alreadySynced') || '已Sync，无需Switch');
                 }
                 return;
             }
@@ -1029,19 +1029,19 @@ export class MessageController {
                 if (!autoSwitchEnabled) {
                     return;
                 }
-                // 自动模式：静默切换（无需网络请求，瞬间完成）
+                // 自动模式：静默Switch（无需网络Request，瞬间Done）
                 await antigravityToolsSyncService.switchOnly(detection.currentEmail);
-                // 刷新状态
+                // RefreshState
                 const state = await autoTriggerController.getState();
                 this.hud.sendMessage({ type: 'autoTriggerState', data: state });
                 this.hud.sendMessage({ type: 'antigravityToolsSyncComplete', data: { success: true } });
-                // 修复：账号切换后必须立即请求获取新账号的配额数据
+                // 修复：AccountSwitch后必须立即RequestGet新Account的QuotaData
                 if (configService.getConfig().quotaSource === 'authorized') {
                     this.reactor.syncTelemetry();
                 }
                 logger.info(`AntigravityTools Sync: Auto-switched to ${detection.currentEmail}`);
             } else {
-                // 手动模式：弹框询问
+                // 手动模式：Modal询问
                 this.hud.sendMessage({
                     type: 'antigravityToolsSyncPrompt',
                     data: {
@@ -1063,15 +1063,15 @@ export class MessageController {
     }
 
     /**
-     * 真正执行导入 + 切换，并刷新前端状态
-     * @param importOnly 如果为 true，仅导入账户而不切换
+     * 真正ExecuteImport + Switch，并Refresh前端State
+     * @param importOnly 如果为 true，仅Import账户而不Switch
      */
     private async performAntigravityToolsImport(activeEmail?: string | null, isAuto: boolean = false, importOnly: boolean = false): Promise<void> {
-        // 创建取消令牌
+        // CreateCancelToken
         this.importCancelToken = { cancelled: false };
         
         try {
-            // 进度回调：将进度发送到前端
+            // ProgressCallback：将ProgressSend到前端
             const onProgress = (current: number, total: number, email: string) => {
                 this.hud.sendMessage({
                     type: 'antigravityToolsSyncProgress',
@@ -1086,19 +1086,19 @@ export class MessageController {
                 data: state,
             });
 
-            // 通知前端导入完成
+            // Notify前端ImportDone
             this.hud.sendMessage({
                 type: 'antigravityToolsSyncComplete',
                 data: { success: true },
             });
 
-            // 如果配额来源是授权模式，自动刷新配额数据
+            // 如果Quota来源是Authorization模式，自动RefreshQuotaData
             if (configService.getConfig().quotaSource === 'authorized' && result.currentAvailable) {
                 this.reactor.syncTelemetry();
             }
 
             if (result.skipped.length > 0) {
-                const skipMsg = `已跳过 ${result.skipped.length} 个无效账号`;
+                const skipMsg = `已Skip ${result.skipped.length} 个InvalidAccount`;
                 logger.warn(`[AntigravityToolsSync] ${skipMsg}`);
                 if (!isAuto) {
                     vscode.window.showWarningMessage(skipMsg);
@@ -1106,7 +1106,7 @@ export class MessageController {
             }
 
             if (!result.currentAvailable && !importOnly) {
-                const warnMsg = '当前账号导入失败，已跳过切换';
+                const warnMsg = 'CurrentAccountImportFailed，已SkipSwitch';
                 logger.warn(`[AntigravityToolsSync] ${warnMsg}`);
                 if (!isAuto) {
                     vscode.window.showWarningMessage(warnMsg);
@@ -1128,7 +1128,7 @@ export class MessageController {
             const err = error instanceof Error ? error.message : String(error);
             logger.warn(`Antigravity Tools import failed: ${err}`);
 
-            // 通知前端导入失败
+            // Notify前端ImportFailed
             this.hud.sendMessage({
                 type: 'antigravityToolsSyncComplete',
                 data: { success: false, error: err },
@@ -1136,20 +1136,20 @@ export class MessageController {
 
             vscode.window.showWarningMessage(err);
         } finally {
-            // 清理取消令牌
+            // 清理CancelToken
             this.importCancelToken = null;
         }
     }
 
     /**
-     * 手动导入 Antigravity Tools JSON 账号
+     * 手动Import Antigravity Tools JSON Account
      */
     private async performAntigravityToolsJsonImport(jsonText: string): Promise<void> {
-        // 创建取消令牌
+        // CreateCancelToken
         this.importCancelToken = { cancelled: false };
         
         try {
-            // 进度回调：将进度发送到前端
+            // ProgressCallback：将ProgressSend到前端
             const onProgress = (current: number, total: number, email: string) => {
                 this.hud.sendMessage({
                     type: 'antigravityToolsSyncProgress',
@@ -1174,12 +1174,12 @@ export class MessageController {
             }
 
             if (result.skipped.length > 0) {
-                const skipMsg = `已跳过 ${result.skipped.length} 个无效账号`;
+                const skipMsg = `已Skip ${result.skipped.length} 个InvalidAccount`;
                 logger.warn(`[AntigravityToolsSync] ${skipMsg}`);
                 vscode.window.showWarningMessage(skipMsg);
             }
 
-            const importedMsg = t('antigravityToolsSync.imported') || '已导入账号';
+            const importedMsg = t('antigravityToolsSync.imported') || '已ImportAccount';
             vscode.window.showInformationMessage(importedMsg);
         } catch (error) {
             const err = error instanceof Error ? error.message : String(error);
@@ -1190,23 +1190,23 @@ export class MessageController {
             });
             vscode.window.showWarningMessage(err);
         } finally {
-            // 清理取消令牌
+            // 清理CancelToken
             this.importCancelToken = null;
         }
     }
 
     /**
-     * 切换至当前登录账户
-     * 优先检测本地 Antigravity 客户端的当前账户，其次检测 Antigravity Tools：
-     * - 如果账户已存在于 Cockpit，直接切换
-     * - 如果账户不存在，走导入弹框流程
+     * Switch至Current登录账户
+     * 优先检测Local Antigravity Client的Current账户，其次检测 Antigravity Tools：
+     * - 如果账户已存在于 Cockpit，直接Switch
+     * - 如果账户不存在，走ImportModal流程
      */
     private async handleSwitchToClientAccount(): Promise<void> {
         try {
             let currentEmail: string | null = null;
             const source = 'local' as const;
             
-            // 仅检测本地 Antigravity 客户端读取当前账户
+            // 仅检测Local Antigravity Client读取Current账户
             try {
                 const preview = await previewLocalCredential();
                 if (preview?.email) {
@@ -1219,7 +1219,7 @@ export class MessageController {
             
             if (!currentEmail) {
                 vscode.window.showWarningMessage(
-                    t('antigravityToolsSync.noClientAccount') || '未检测到客户端登录账户',
+                    t('antigravityToolsSync.noClientAccount') || '未检测到Client登录账户',
                 );
                 return;
             }
@@ -1227,28 +1227,28 @@ export class MessageController {
             const activeEmail = await credentialStorage.getActiveAccount();
             const currentEmailLower = currentEmail.toLowerCase();
             
-            // 检查是否已是当前账户
+            // Check是否已是Current账户
             if (activeEmail && activeEmail.toLowerCase() === currentEmailLower) {
                 vscode.window.showInformationMessage(
-                    t('antigravityToolsSync.alreadySynced') || '已是当前账户',
+                    t('antigravityToolsSync.alreadySynced') || '已是Current账户',
                 );
                 return;
             }
 
-            // 检查账户是否已存在于 Cockpit
+            // Check账户是否已存在于 Cockpit
             const accounts = await credentialStorage.getAllCredentials();
             const existingEmail = Object.keys(accounts).find(
                 email => email.toLowerCase() === currentEmailLower,
             );
 
             if (existingEmail) {
-                // 账户已存在，通过 autoTriggerController 切换（使用互斥锁保护）
+                // 账户已存在，通过 autoTriggerController Switch（使用互斥锁保护）
                 logger.info(`[SwitchToClient] Switching to existing account: ${existingEmail}`);
                 await autoTriggerController.switchAccount(existingEmail);
                 const state = await autoTriggerController.getState();
                 this.hud.sendMessage({ type: 'autoTriggerState', data: state });
                 
-                // 刷新配额
+                // RefreshQuota
                 const source = configService.getConfig().quotaSource === 'authorized' ? 'authorized' : 'local';
                 const usedCache = await this.reactor.tryUseQuotaCache(source, existingEmail);
                 if (!usedCache) {
@@ -1257,10 +1257,10 @@ export class MessageController {
                 
                 vscode.window.showInformationMessage(
                     t('autoTrigger.accountSwitched', { email: existingEmail }) 
-                    || `已切换至: ${existingEmail}`,
+                    || `已Switch至: ${existingEmail}`,
                 );
             } else {
-                // 账户不存在，走导入弹框流程
+                // 账户不存在，走ImportModal流程
                 logger.info(`[SwitchToClient] Account not found, showing import prompt for: ${currentEmail} (source: ${source})`);
                 this.hud.sendMessage({
                     type: 'antigravityToolsSyncPrompt',
@@ -1278,7 +1278,7 @@ export class MessageController {
             const err = error instanceof Error ? error.message : String(error);
             logger.warn(`[SwitchToClient] Failed: ${err}`);
             vscode.window.showWarningMessage(
-                t('antigravityToolsSync.switchFailed', { message: err }) || `切换失败: ${err}`,
+                t('antigravityToolsSync.switchFailed', { message: err }) || `SwitchFailed: ${err}`,
             );
         }
     }

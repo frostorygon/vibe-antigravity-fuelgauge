@@ -1,7 +1,7 @@
 /**
- * Antigravity Cockpit - Auto Trigger Controller
- * 自动触发功能的主控制器
- * 整合 OAuth、调度器、触发器，提供统一的接口
+ * Antigravity FuelGauge - Auto Trigger Controller
+ * Auto Trigger功能的主Controller
+ * 整合 OAuth、调度器、触发器，提供统一的API
  */
 
 import * as vscode from 'vscode';
@@ -19,7 +19,7 @@ import { logger } from '../shared/log_service';
 import { t } from '../shared/i18n';
 
 /**
- * 带有配额信息的模型（用于配额重置检测）
+ * 带有QuotaInfo的Model（用于QuotaReset检测）
  */
 interface QuotaModelInfo {
     id: string;
@@ -29,30 +29,30 @@ interface QuotaModelInfo {
     remainingFraction?: number;
 }
 
-// 存储键
+// Storage键
 const SCHEDULE_CONFIG_KEY = 'scheduleConfig';
 
 /**
- * 自动触发控制器
+ * Auto Trigger Controller
  */
 class AutoTriggerController {
     private initialized = false;
     private messageHandler?: (message: AutoTriggerMessage) => void;
-    /** 配额中显示的模型常量列表，用于过滤可用模型 */
+    /** Quota中Show的Model常量List，用于Filter可用Model */
     private quotaModelConstants: string[] = [];
-    /** 模型 ID 到模型常量的映射 (id -> modelConstant) */
+    /** Model ID 到Model常量的映射 (id -> modelConstant) */
     private modelIdToConstant: Map<string, string> = new Map();
-    /** Fallback 定时器列表 (时段外固定时间触发) */
+    /** Fallback Scheduled器List (时段外固定Time触发) */
     private fallbackTimers: ReturnType<typeof setTimeout>[] = [];
-    /** 账户操作互斥锁，防止并发账户操作导致状态不一致 */
+    /** 账户操作互斥锁，防止并发账户操作导致State不一致 */
     private accountOperationLock: Promise<void> = Promise.resolve();
 
     /**
-     * 执行账户操作时获取互斥锁
-     * 确保同一时间只有一个账户操作（删除、切换、导入等）在执行
+     * Execute账户操作时Get互斥锁
+     * 确保同一Time只有一个账户操作（Delete、Switch、Import等）在Execute
      */
     private async withAccountLock<T>(operation: () => Promise<T>): Promise<T> {
-        // 等待前一个操作完成
+        // Waiting前一个操作Done
         const previousLock = this.accountOperationLock;
         let releaseLock: () => void;
         this.accountOperationLock = new Promise<void>(resolve => {
@@ -69,7 +69,7 @@ class AutoTriggerController {
 
 
     /**
-     * 设置配额模型常量列表（从 Dashboard 的配额数据中获取）
+     * SetQuotaModel常量List（从 Dashboard 的QuotaData中Get）
      */
     setQuotaModels(modelConstants: string[]): void {
         this.quotaModelConstants = modelConstants;
@@ -77,26 +77,26 @@ class AutoTriggerController {
     }
 
     /**
-     * 初始化控制器
+     * InitializeController
      */
     async initialize(context: vscode.ExtensionContext): Promise<void> {
         if (this.initialized) {
             return;
         }
 
-        // 初始化凭证存储
+        // InitializeCredential Storage
         credentialStorage.initialize(context);
 
-        // 初始化触发服务（加载历史记录）
+        // InitializeTrigger Service（LoadHistoryRecord）
         triggerService.initialize();
 
-        // 恢复调度配置
+        // Resume调度Config
         const savedConfig = credentialStorage.getState<ScheduleConfig | null>(SCHEDULE_CONFIG_KEY, null);
         if (savedConfig) {
-            // 互斥逻辑：wakeOnReset 优先，不启动定时调度器
+            // 互斥逻辑：wakeOnReset 优先，不StartScheduled调度器
             if (savedConfig.wakeOnReset && savedConfig.enabled) {
                 logger.info('[AutoTriggerController] Wake on reset mode enabled, scheduler not started');
-                // 如果启用了时段策略且有 fallback 时间，启动 fallback 定时器
+                // If time period policy is enabled and有 fallback Time，Start fallback Scheduled器
                 if (savedConfig.timeWindowEnabled && savedConfig.fallbackTimes?.length) {
                     this.startFallbackScheduler(savedConfig);
                 }
@@ -111,14 +111,14 @@ class AutoTriggerController {
     }
 
     /**
-     * 更新状态栏显示（已整合到主配额悬浮提示中，此方法现为空操作）
+     * UpdateState栏Show（已整合到主Quota悬浮Tooltip中，此方法现为空操作）
      */
     private async updateStatusBar(): Promise<void> {
-        // 下次触发时间现在显示在主配额悬浮提示中，不再需要单独的状态栏
+        // 下次触发Time现在Show在主Quota悬浮Tooltip中，不再需要单独的State栏
     }
 
     /**
-     * 获取当前状态
+     * GetCurrentState
      */
     async getState(): Promise<AutoTriggerState> {
         const authorization = await credentialStorage.getAuthorizationStatus();
@@ -131,10 +131,10 @@ class AutoTriggerController {
         });
 
         const nextRunTime = schedulerService.getNextRunTime();
-        // 传入配额模型常量进行过滤
+        // 传入QuotaModel常量进行Filter
         const availableModels = await triggerService.fetchAvailableModels(this.quotaModelConstants);
 
-        // 更新 ID 到常量的映射
+        // Update ID 到常量的映射
         this.modelIdToConstant.clear();
         for (const model of availableModels) {
             if (model.id && model.modelConstant) {
@@ -154,27 +154,27 @@ class AutoTriggerController {
     }
 
     /**
-     * 开始授权流程
+     * StartAuthorization流程
      */
     async startAuthorization(): Promise<boolean> {
         return await oauthService.startAuthorization();
     }
 
     /**
-     * 开始授权流程（别名）
+     * StartAuthorization流程（别名）
      */
     async authorize(): Promise<boolean> {
         return this.startAuthorization();
     }
 
     /**
-     * 撤销授权
+     * 撤销Authorization
      */
     async revokeAuthorization(): Promise<void> {
         await oauthService.revokeAuthorization();
-        // 停止调度器
+        // Stop调度器
         schedulerService.stop();
-        // 禁用调度
+        // Disable调度
         const schedule = credentialStorage.getState<ScheduleConfig>(SCHEDULE_CONFIG_KEY, {
             enabled: false,
             repeatMode: 'daily',
@@ -187,7 +187,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 撤销当前账号授权
+     * 撤销CurrentAccountAuthorization
      */
     async revokeActiveAccount(): Promise<void> {
         const activeAccount = await credentialStorage.getActiveAccount();
@@ -199,8 +199,8 @@ class AutoTriggerController {
     }
 
     /**
-     * 移除指定账号
-     * @param email 要移除的账号邮箱
+     * 移除指定Account
+     * @param email 要移除的AccountEmail
      */
     async removeAccount(email: string): Promise<void> {
         return this.withAccountLock(async () => {
@@ -223,7 +223,7 @@ class AutoTriggerController {
                     schedule.selectedAccounts = filtered;
                     scheduleChanged = true;
 
-                    // 如果勾选的账号被全部移除，自动关闭自动唤醒
+                    // 如果勾选的Account被全部移除，自动Close自动Wakeup
                     if (filtered.length === 0 && schedule.enabled) {
                         schedule.enabled = false;
                         schedulerService.stop();
@@ -254,8 +254,8 @@ class AutoTriggerController {
     }
 
     /**
-     * 切换活跃账号
-     * @param email 要切换到的账号邮箱
+     * Switch活跃Account
+     * @param email 要Switch到的AccountEmail
      */
     async switchAccount(email: string): Promise<void> {
         return this.withAccountLock(async () => {
@@ -266,15 +266,15 @@ class AutoTriggerController {
     }
 
     /**
-     * 重新授权指定账号（先切换到该账号再重新授权）
-     * @param email 要重新授权的账号邮箱
+     * 重新Authorization指定Account（先Switch到该Account再重新Authorization）
+     * @param email 要重新Authorization的AccountEmail
      */
     async reauthorizeAccount(email: string): Promise<void> {
-        // 先切换到该账号
+        // 先Switch到该Account
         await credentialStorage.setActiveAccount(email);
         logger.info(`[AutoTriggerController] Reauthorizing account: ${email}`);
         
-        // 执行重新授权流程
+        // Execute重新Authorization流程
         const success = await oauthService.startAuthorization();
         if (!success) {
             throw new Error('Reauthorization cancelled or failed');
@@ -284,44 +284,44 @@ class AutoTriggerController {
     }
 
     /**
-     * 保存调度配置
+     * Save scheduleConfig
      */
     async saveSchedule(config: ScheduleConfig): Promise<void> {
-        // 验证配置
+        // ValidateConfig
         if (config.crontab) {
             const result = schedulerService.validateCrontab(config.crontab);
             if (!result.valid) {
-                throw new Error(`无效的 crontab 表达式: ${result.error}`);
+                throw new Error(`Invalid的 crontab 表达式: ${result.error}`);
             }
         }
 
-        // 保存配置
+        // SaveConfig
         await credentialStorage.saveState(SCHEDULE_CONFIG_KEY, config);
 
         // 互斥逻辑：三选一
-        // 1. wakeOnReset = true → 配额重置触发（不需要定时器）
-        // 2. wakeOnReset = false + enabled = true → 定时/Crontab 触发
+        // 1. wakeOnReset = true → QuotaReset触发（不需要Scheduled器）
+        // 2. wakeOnReset = false + enabled = true → Scheduled/Crontab 触发
         // 3. 都为 false → 不触发
         if (config.wakeOnReset) {
-            // 配额重置模式：停止定时调度器
+            // QuotaReset模式：StopScheduled调度器
             schedulerService.stop();
             this.stopFallbackScheduler();
             logger.info('[AutoTriggerController] Schedule saved, wakeOnReset mode enabled');
-            // 如果启用了时段策略且有 fallback 时间，启动 fallback 定时器
+            // If time period policy is enabled and有 fallback Time，Start fallback Scheduled器
             if (config.timeWindowEnabled && config.fallbackTimes?.length) {
                 this.startFallbackScheduler(config);
             }
         } else if (config.enabled) {
-            // 定时/Crontab 模式
+            // Scheduled/Crontab 模式
             this.stopFallbackScheduler();
             const accounts = await this.resolveAccountsFromList(config.selectedAccounts);
             if (accounts.length === 0) {
-                throw new Error('请先完成授权');
+                throw new Error('请先DoneAuthorization');
             }
             schedulerService.setSchedule(config, () => this.executeTrigger());
             logger.info(`[AutoTriggerController] Schedule saved, enabled=${config.enabled}`);
         } else {
-            // 都不启用
+            // 都不Enable
             schedulerService.stop();
             this.stopFallbackScheduler();
             logger.info('[AutoTriggerController] Schedule saved, all triggers disabled');
@@ -331,7 +331,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 解析可用账号列表（多账号）
+     * Parse可用AccountList（多Account）
      */
     private async resolveAccountsFromList(requestedAccounts?: string[]): Promise<string[]> {
         const allCredentials = await credentialStorage.getAllCredentials();
@@ -340,13 +340,13 @@ class AutoTriggerController {
             return [];
         }
 
-        // 如果明确传入了账号列表（包括空列表），则严格遵守该列表，不再走备用逻辑。
-        // 除非 requestedAccounts 为 undefined (表示从未配置过此项)。
+        // 如果明确传入了AccountList（包括空List），则严格遵守该List，不再走备用逻辑。
+        // 除非 requestedAccounts 为 undefined (表示从未Config过此项)。
         if (Array.isArray(requestedAccounts)) {
             return requestedAccounts.filter(email => (email in allCredentials) && Boolean(allCredentials[email]?.refreshToken));
         }
 
-        // 备用逻辑：仅在配置缺失时使用。优先使用活跃账号，其次使用第一个可用账号。
+        // 备用逻辑：仅在Config缺失时使用。优先使用活跃Account，其次使用第一个可用Account。
         const candidates: string[] = [];
         const active = await credentialStorage.getActiveAccount();
         if (active && (active in allCredentials)) {
@@ -359,7 +359,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 获取调度触发账号列表（多账号）
+     * Get调度触发AccountList（多Account）
      */
     private async resolveScheduleAccounts(schedule: ScheduleConfig): Promise<string[]> {
         return this.resolveAccountsFromList(schedule.selectedAccounts);
@@ -367,7 +367,7 @@ class AutoTriggerController {
 
     /**
      * 手动触发一次
-     * @param models 可选的自定义模型列表
+     * @param models Optional的CustomModelList
      */
     async testTrigger(models?: string[], accounts?: string[], maxOutputTokens?: number): Promise<void> {
         const targetAccounts = await this.resolveAccountsFromList(accounts);
@@ -378,7 +378,7 @@ class AutoTriggerController {
 
         vscode.window.showInformationMessage(t('autoTrigger.triggeringNotify'));
 
-        // 如果传入了自定义模型列表，使用自定义的；否则使用配置中的
+        // 如果传入了CustomModelList，使用Custom的；否则使用Config中的
         let selectedModels = models;
         if (!selectedModels || selectedModels.length === 0) {
             const schedule = credentialStorage.getState<ScheduleConfig>(SCHEDULE_CONFIG_KEY, {
@@ -411,14 +411,14 @@ class AutoTriggerController {
             vscode.window.showErrorMessage(t('autoTrigger.testTriggerFailed', { error: firstError || t('common.unknownError') }));
         }
 
-        // 通知 UI 更新
+        // Notify UI Update
         this.notifyStateUpdate();
     }
 
     /**
-     * 立即触发（别名，返回结果）
-     * @param models 可选的自定义模型列表，如果不传则使用配置中的模型
-     * @param customPrompt 可选的自定义唤醒词
+     * 立即触发（别名，Return结果）
+     * @param models Optional的CustomModelList，如果不传则使用Config中的Model
+     * @param customPrompt Optional的CustomWakeup词
      */
     async triggerNow(
         models?: string[],
@@ -428,10 +428,10 @@ class AutoTriggerController {
     ): Promise<{ success: boolean; duration?: number; error?: string; response?: string }> {
         const targetAccounts = await this.resolveAccountsFromList(accounts);
         if (targetAccounts.length === 0) {
-            return { success: false, error: '请先完成授权' };
+            return { success: false, error: '请先DoneAuthorization' };
         }
 
-        // 如果传入了自定义模型列表，使用自定义的；否则使用配置中的
+        // 如果传入了CustomModelList，使用Custom的；否则使用Config中的
         let selectedModels = models;
         if (!selectedModels || selectedModels.length === 0) {
             const schedule = credentialStorage.getState<ScheduleConfig>(SCHEDULE_CONFIG_KEY, {
@@ -462,19 +462,19 @@ class AutoTriggerController {
             }
         }
 
-        // 通知 UI 更新
+        // Notify UI Update
         this.notifyStateUpdate();
 
         return {
             success: anySuccess,
             duration: totalDuration || undefined,
             error: anySuccess ? undefined : (firstError || 'Unknown error'),
-            response: anySuccess ? firstResponse : undefined,  // AI 回复内容
+            response: anySuccess ? firstResponse : undefined,  // AI 回复Content
         };
     }
 
     /**
-     * 清空历史记录
+     * ClearHistoryRecord
      */
     async clearHistory(): Promise<void> {
         triggerService.clearHistory();
@@ -482,7 +482,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 执行触发（由调度器调用）
+     * Execute触发（由调度器调用）
      */
     private async executeTrigger(): Promise<void> {
         const schedule = credentialStorage.getState<ScheduleConfig>(SCHEDULE_CONFIG_KEY, {
@@ -515,19 +515,19 @@ class AutoTriggerController {
             }
         }
 
-        // 通知 UI 更新
+        // Notify UI Update
         this.notifyStateUpdate();
     }
 
     /**
-     * 检查配额重置并自动触发唤醒（多账号独立检测版本）
-     * 遍历所有选中账号，为每个账号独立获取配额并检测
-     * 由定时刷新或手动触发调用
+     * CheckQuotaReset并Auto TriggerWakeup（多Account独立检测Version）
+     * 遍历所有选中Account，为每个Account独立GetQuota并检测
+     * 由ScheduledRefresh或手动触发调用
      */
     async checkAndTriggerOnQuotaReset(): Promise<void> {
         logger.debug('[AutoTriggerController] checkAndTriggerOnQuotaReset called (multi-account)');
 
-        // 获取调度配置
+        // Get调度Config
         const schedule = credentialStorage.getState<ScheduleConfig>(SCHEDULE_CONFIG_KEY, {
             enabled: false,
             repeatMode: 'daily',
@@ -542,13 +542,13 @@ class AutoTriggerController {
             return;
         }
 
-        // 检查是否启用了"配额重置时自动唤醒"
+        // Check是否Enable了"QuotaReset时自动Wakeup"
         if (!schedule.wakeOnReset) {
             logger.debug('[AutoTriggerController] Wake on reset is disabled, skipping');
             return;
         }
 
-        // 检查时段策略
+        // Check时段策略
         if (schedule.timeWindowEnabled) {
             const inWindow = this.isInTimeWindow(schedule.timeWindowStart, schedule.timeWindowEnd);
             if (!inWindow) {
@@ -557,7 +557,7 @@ class AutoTriggerController {
             }
         }
 
-        // 获取所有选中的账号
+        // Get所有选中的Account
         const accounts = await this.resolveScheduleAccounts(schedule);
         if (accounts.length === 0) {
             logger.debug('[AutoTriggerController] Wake on reset: No valid accounts, skipping');
@@ -572,17 +572,17 @@ class AutoTriggerController {
 
         logger.info(`[AutoTriggerController] Wake on reset: Checking ${accounts.length} accounts, ${selectedModels.length} models`);
 
-        // 遍历每个选中的账号，独立检测配额
+        // 遍历每个选中的Account，独立检测Quota
         for (const email of accounts) {
             await this.checkAndTriggerForAccount(email, schedule, selectedModels);
         }
     }
 
     /**
-     * 为单个账号检查配额并触发唤醒
-     * @param email 账号邮箱
-     * @param schedule 调度配置
-     * @param selectedModels 选中的模型列表
+     * 为单个AccountCheckQuota并触发Wakeup
+     * @param email AccountEmail
+     * @param schedule 调度Config
+     * @param selectedModels 选中的ModelList
      */
     private async checkAndTriggerForAccount(
         email: string,
@@ -592,14 +592,14 @@ class AutoTriggerController {
         logger.debug(`[AutoTriggerController] Checking quota for account: ${email}`);
 
         try {
-            // 获取该账号的配额数据
+            // Get该Account的QuotaData
             const models = await this.fetchQuotaModelsForAccount(email);
             if (!models || models.length === 0) {
                 logger.debug(`[AutoTriggerController] No quota data for ${email}, skipping`);
                 return;
             }
 
-            // 构建模型 ID 到配额的映射
+            // 构建Model ID 到Quota的映射
             const quotaMap = new Map<string, { id: string; resetAt?: string; remaining: number; limit: number }>();
             for (const model of models) {
                 if (!model.modelConstant) {
@@ -614,22 +614,22 @@ class AutoTriggerController {
                     id: model.modelConstant,
                     resetAt: model.resetTime!.toISOString(),
                     remaining: model.remainingFraction !== undefined ? Math.floor(model.remainingFraction * 100) : 0,
-                    limit: 100,  // 使用百分比，limit 固定为 100
+                    limit: 100,  // 使用Percentage，limit 固定为 100
                 });
-                // 同时用模型 ID 作为 key
+                // 同时用Model ID 作为 key
                 if (model.id) {
                     quotaMap.set(model.id, quotaMap.get(model.modelConstant)!);
                 }
             }
 
-            // 检查每个选中的模型是否需要触发
+            // Check每个选中的Model是否需要触发
             const modelsToTrigger: string[] = [];
 
             for (const modelId of selectedModels) {
                 const modelConstant = this.modelIdToConstant.get(modelId);
                 const triggerKey = `${email}:${modelConstant || modelId}`;
 
-                // 查找配额数据
+                // 查找QuotaData
                 const modelQuota = quotaMap.get(modelConstant || '') || quotaMap.get(modelId);
                 if (!modelQuota) {
                     logger.debug(`[AutoTriggerController] Model ${modelId} not found in quota for ${email}`);
@@ -642,7 +642,7 @@ class AutoTriggerController {
 
                 logger.debug(`[AutoTriggerController] [${email}] Model ${modelId}: remaining=${modelQuota.remaining}%, resetAt=${modelQuota.resetAt}`);
 
-                // 检查是否应该触发 - 使用 email:modelConstant 作为 key 来区分不同账号
+                // Check是否应该触发 - 使用 email:modelConstant 作为 key 来区分不同Account
                 if (triggerService.shouldTriggerOnReset(triggerKey, modelQuota.resetAt, modelQuota.remaining, modelQuota.limit)) {
                     logger.debug(`[AutoTriggerController] [${email}] Model ${modelId} should trigger!`);
                     modelsToTrigger.push(modelId);
@@ -658,7 +658,7 @@ class AutoTriggerController {
                 return;
             }
 
-            // 触发唤醒
+            // 触发Wakeup
             logger.info(`[AutoTriggerController] Wake on reset: Triggering ${email} for models: ${modelsToTrigger.join(', ')}`);
             const result = await triggerService.trigger(
                 modelsToTrigger,
@@ -679,33 +679,33 @@ class AutoTriggerController {
             logger.warn(`[AutoTriggerController] Failed to check quota for ${email}: ${error}`);
         }
 
-        // 通知 UI 更新
+        // Notify UI Update
         this.notifyStateUpdate();
     }
 
     /**
-     * 获取指定账号的配额模型列表
-     * @param email 账号邮箱
-     * @returns 带有配额信息的模型列表
+     * Get指定Account的QuotaModelList
+     * @param email AccountEmail
+     * @returns 带有QuotaInfo的ModelList
      */
     private async fetchQuotaModelsForAccount(email: string): Promise<QuotaModelInfo[] | null> {
         try {
-            // 获取该账号的 token
+            // Get该Account的 token
             const tokenResult = await oauthService.getAccessTokenStatusForAccount(email);
             if (tokenResult.state !== 'ok' || !tokenResult.token) {
                 logger.debug(`[AutoTriggerController] Token unavailable for ${email}: ${tokenResult.state}`);
                 return null;
             }
 
-            // 获取 projectId
+            // Get projectId
             const credential = await credentialStorage.getCredentialForAccount(email);
             const projectId = credential?.projectId;
 
-            // 获取配额模型（复用 triggerService 的方法）
+            // GetQuotaModel（复用 triggerService 的方法）
             await triggerService.fetchAvailableModels(this.quotaModelConstants);
             
-            // 注意：这里需要通过真正的配额 API 获取带有 resetTime 的模型数据
-            // 使用 cloudCodeClient 获取完整配额信息
+            // 注意：这里需要通过真正的Quota API Get带有 resetTime 的ModelData
+            // 使用 cloudCodeClient Get完整QuotaInfo
             const { cloudCodeClient } = await import('../shared/cloudcode_client');
             const quotaData = await cloudCodeClient.fetchAvailableModels(
                 tokenResult.token,
@@ -744,28 +744,28 @@ class AutoTriggerController {
     }
 
     /**
-     * 获取调度描述
+     * Get调度Description
      */
     describeSchedule(config: ScheduleConfig): string {
         return schedulerService.describeSchedule(config);
     }
 
     /**
-     * 获取预设模板
+     * Get预设Template
      */
     getPresets(): typeof SCHEDULE_PRESETS {
         return SCHEDULE_PRESETS;
     }
 
     /**
-     * 将配置转换为 crontab
+     * 将Config转换为 crontab
      */
     configToCrontab(config: ScheduleConfig): string {
         return schedulerService.configToCrontab(config);
     }
 
     /**
-     * 验证 crontab
+     * Validate crontab
      */
     validateCrontab(crontab: string): { valid: boolean; description?: string; error?: string } {
         const result = CronParser.parse(crontab);
@@ -777,7 +777,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 获取下次运行时间的格式化字符串
+     * Get下次RunningTime的Format字符串
      */
     getNextRunTimeFormatted(): string | null {
         const nextRun = schedulerService.getNextRunTime();
@@ -792,19 +792,19 @@ class AutoTriggerController {
             return null;
         }
 
-        // 如果是今天，显示时间
+        // 如果是今天，ShowTime
         if (nextRun.toDateString() === now.toDateString()) {
             return nextRun.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
         }
 
-        // 如果是明天，显示 "明天 HH:MM"
+        // 如果是明天，Show "明天 HH:MM"
         const tomorrow = new Date(now);
         tomorrow.setDate(tomorrow.getDate() + 1);
         if (nextRun.toDateString() === tomorrow.toDateString()) {
             return `${t('common.tomorrow')} ${nextRun.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`;
         }
 
-        // 其他情况显示日期和时间
+        // 其他情况ShowDate和Time
         return nextRun.toLocaleString(undefined, {
             month: 'short',
             day: 'numeric',
@@ -814,7 +814,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 处理来自 Webview 的消息
+     * Handle来自 Webview 的Message
      */
     async handleMessage(message: AutoTriggerMessage): Promise<void> {
         switch (message.type) {
@@ -856,17 +856,17 @@ class AutoTriggerController {
     }
 
     /**
-     * 设置消息处理器（用于向 Webview 发送更新）
+     * SetMessageHandle器（用于向 Webview SendUpdate）
      */
     setMessageHandler(handler: (message: AutoTriggerMessage) => void): void {
         this.messageHandler = handler;
     }
 
     /**
-     * 通知状态更新
+     * NotifyStateUpdate
      */
     private async notifyStateUpdate(): Promise<void> {
-        // 更新状态栏
+        // UpdateState栏
         this.updateStatusBar();
 
         if (this.messageHandler) {
@@ -879,14 +879,14 @@ class AutoTriggerController {
     }
 
     /**
-     * 判断当前时间是否在指定的时间窗口内
-     * @param startTime 开始时间 (如 "09:00")
-     * @param endTime 结束时间 (如 "18:00")
+     * 判断CurrentTime是否在指定的Time窗口内
+     * @param startTime StartTime (如 "09:00")
+     * @param endTime EndTime (如 "18:00")
      * @returns true 如果在窗口内
      */
     private isInTimeWindow(startTime?: string, endTime?: string): boolean {
         if (!startTime || !endTime) {
-            return true; // 未配置时默认在窗口内
+            return true; // 未Config时Default在窗口内
         }
 
         const now = new Date();
@@ -900,7 +900,7 @@ class AutoTriggerController {
         const startMinutes = parseTime(startTime);
         const endMinutes = parseTime(endTime);
 
-        // 处理跨天情况 (如 22:00 - 06:00)
+        // Handle跨天情况 (如 22:00 - 06:00)
         if (startMinutes <= endMinutes) {
             // 正常情况: 09:00 - 18:00
             return currentMinutes >= startMinutes && currentMinutes < endMinutes;
@@ -911,7 +911,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 启动 fallback 定时器（在时段外的固定时间点触发）
+     * Start fallback Scheduled器（在时段外的固定Time点触发）
      */
     private startFallbackScheduler(config: ScheduleConfig): void {
         this.stopFallbackScheduler();
@@ -927,7 +927,7 @@ class AutoTriggerController {
             const now = new Date();
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
-            // 找到下一个触发时间点
+            // 找到下一个触发Time点
             const parseTime = (timeStr: string): number => {
                 const [h, m] = timeStr.split(':').map(Number);
                 return h * 60 + m;
@@ -936,19 +936,19 @@ class AutoTriggerController {
             const times = fallbackTimes.map(t => parseTime(t)).sort((a, b) => a - b);
             let nextTime = times.find(t => t > currentMinutes);
 
-            // 如果今天没有更多时间点，取明天第一个
+            // 如果今天没有更多Time点，取明天第一个
             const isNextDay = nextTime === undefined;
             if (isNextDay) {
                 nextTime = times[0];
             }
 
-            // 如果还是没有时间点，退出
+            // 如果还是没有Time点，Exit
             if (nextTime === undefined) {
                 logger.warn('[AutoTriggerController] No fallback times available');
                 return;
             }
 
-            // 计算延迟毫秒数
+            // 计算Delay毫秒数
             let delayMinutes = nextTime - currentMinutes;
             if (isNextDay) {
                 delayMinutes += 24 * 60;
@@ -958,7 +958,7 @@ class AutoTriggerController {
             logger.info(`[AutoTriggerController] Next fallback trigger in ${delayMinutes} minutes (${(nextTime / 60) | 0}:${String(nextTime % 60).padStart(2, '0')})`);
 
             const timer = setTimeout(async () => {
-                // 再次检查是否仍然在时段外
+                // 再次Check是否仍然在时段外
                 if (config.timeWindowEnabled) {
                     const inWindow = this.isInTimeWindow(config.timeWindowStart, config.timeWindowEnd);
                     if (inWindow) {
@@ -980,7 +980,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 停止所有 fallback 定时器
+     * Stop所有 fallback Scheduled器
      */
     private stopFallbackScheduler(): void {
         for (const timer of this.fallbackTimers) {
@@ -991,7 +991,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 执行 fallback 触发
+     * Execute fallback 触发
      */
     private async executeFallbackTrigger(config: ScheduleConfig): Promise<void> {
         const accounts = await this.resolveAccountsFromList(config.selectedAccounts);
@@ -1038,11 +1038,11 @@ class AutoTriggerController {
     }
 
     /**
-     * 启动时自动同步到客户端当前登录账户
-     * 优先检测本地 Antigravity 客户端，其次检测 Antigravity Tools：
-     * - 如果客户端账户已存在于 Cockpit，自动切换
-     * - 如果账户不存在，静默跳过（不弹框打扰用户）
-     * @returns 切换结果：'switched' 已切换, 'same' 已是当前账户, 'not_found' 未检测到账户, 'not_exists' 账户未导入
+     * Auto-sync to client current account on startup
+     * 优先检测Local Antigravity Client，其次检测 Antigravity Tools：
+     * - 如果Client账户已存在于 Cockpit，自动Switch
+     * - 如果账户不存在，静默Skip（不Modal打扰User）
+     * @returns Switch结果：'switched' 已Switch, 'same' 已是Current账户, 'not_found' 未检测到账户, 'not_exists' 账户未Import
      */
     async syncToClientAccountOnStartup(): Promise<'switched' | 'same' | 'not_found' | 'not_exists'> {
         return this.withAccountLock(async () => {
@@ -1050,10 +1050,10 @@ class AutoTriggerController {
                 let currentEmail: string | null = null;
                 const source = 'local' as const;
                 
-                // 动态导入，避免循环依赖
+                // DynamicImport，避免循环依赖
                 const { previewLocalCredential } = await import('./local_auth_importer');
                 
-                // 仅检测本地 Antigravity 客户端读取当前账户
+                // 仅检测Local Antigravity Client读取Current账户
                 try {
                     const preview = await previewLocalCredential();
                     if (preview?.email) {
@@ -1072,26 +1072,26 @@ class AutoTriggerController {
                 const activeEmail = await credentialStorage.getActiveAccount();
                 const currentEmailLower = currentEmail.toLowerCase();
                 
-                // 检查是否已是当前账户
+                // Check是否已是Current账户
                 if (activeEmail && activeEmail.toLowerCase() === currentEmailLower) {
                     logger.debug(`[AutoTriggerController] Startup sync: already using account ${activeEmail}`);
                     return 'same';
                 }
 
-                // 检查账户是否已存在于 Cockpit
+                // Check账户是否已存在于 Cockpit
                 const accounts = await credentialStorage.getAllCredentials();
                 const existingEmail = Object.keys(accounts).find(
                     email => email.toLowerCase() === currentEmailLower,
                 );
 
                 if (existingEmail) {
-                    // 账户已存在，直接切换
+                    // 账户已存在，直接Switch
                     logger.info(`[AutoTriggerController] Startup sync: switching to existing account: ${existingEmail} (source: ${source})`);
                     await credentialStorage.setActiveAccount(existingEmail);
                     this.notifyStateUpdate();
                     return 'switched';
                 } else {
-                    // 账户不存在，静默导入并切换
+                    // 账户不存在，静默Import并Switch
                     logger.info(`[AutoTriggerController] Startup sync: account ${currentEmail} not found, importing silently...`);
                     try {
                         const { importLocalCredential } = await import('./local_auth_importer');
@@ -1115,7 +1115,7 @@ class AutoTriggerController {
     }
 
     /**
-     * 销毁控制器
+     * DisposeController
      */
     dispose(): void {
         schedulerService.stop();
@@ -1124,5 +1124,5 @@ class AutoTriggerController {
     }
 }
 
-// 导出单例
+// Export单例
 export const autoTriggerController = new AutoTriggerController();

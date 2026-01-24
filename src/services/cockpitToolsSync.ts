@@ -35,7 +35,7 @@ async function fetchRemoteAccounts(): Promise<AccountTokenInfo[]> {
 }
 
 /**
- * 双向同步 Cockpit Tools 账号（仅在 WS 连接正常时执行）
+ * 双向Sync Cockpit Tools Account（仅在 WS Connect正常时Execute）
  */
 export async function syncAccountsWithCockpitTools(options?: { force?: boolean; reason?: string }): Promise<void> {
     if (!cockpitToolsWs.isConnected) {
@@ -70,13 +70,13 @@ export async function syncAccountsWithCockpitTools(options?: { force?: boolean; 
         let pushedAny = false;
         let localChanged = false;
 
-        // 处理本地存在但远端不存在的账号
+        // HandleLocal存在但远端不存在的Account
         for (const email of localEmails) {
             if (remoteSet.has(email)) {
                 continue;
             }
 
-            // 如果之前远端存在，现在消失，视为远端删除
+            // 如果之前远端存在，现在消失，视为远端Delete
             if (previousRemoteSet.has(email)) {
                 await credentialStorage.deleteCredentialForAccount(email, true);
                 localSet.delete(email);
@@ -102,7 +102,7 @@ export async function syncAccountsWithCockpitTools(options?: { force?: boolean; 
                 pushedAny = true;
                 logger.info(`[Sync] Push to Tools: ${email}`);
             } else {
-                logger.warn(`[Sync] 推送账号到 Tools 失败: ${email} - ${result.message}`);
+                logger.warn(`[Sync] 推送Account到 Tools Failed: ${email} - ${result.message}`);
             }
         }
 
@@ -112,7 +112,7 @@ export async function syncAccountsWithCockpitTools(options?: { force?: boolean; 
             remoteSet = new Set(remoteEmails);
         }
 
-        // 导入远端存在但本地不存在的账号
+        // Import远端存在但Local不存在的Account
         for (const account of remoteAccounts) {
             if (localSet.has(account.email)) {
                 continue;
@@ -147,9 +147,9 @@ export async function syncAccountsWithCockpitTools(options?: { force?: boolean; 
         }
     } catch (error) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.error(`[Sync] 双向同步失败: ${err.message}`);
-        if (err.message.includes('请求超时')) {
-            logger.warn('[Sync] 可能是桌面端未升级到支持 accounts_with_tokens 的版本');
+        logger.error(`[Sync] 双向SyncFailed: ${err.message}`);
+        if (err.message.includes('RequestTimeout')) {
+            logger.warn('[Sync] 可能是桌面端未升级到支持 accounts_with_tokens 的Version');
         }
     } finally {
         syncInProgress = false;

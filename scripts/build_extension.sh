@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🔒 Building Antigravity Cockpit (Secure Fork)..."
+echo "🔒 Building Antigravity FuelGauge (Secure Fork)..."
 
 # Install dependencies
 echo "📦 Installing dependencies..."

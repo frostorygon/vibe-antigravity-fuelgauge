@@ -24,16 +24,16 @@ export class CommandController {
     }
 
     private registerCommands(): void {
-        // 打开 Dashboard 或账号总览（根据用户上次选择的视图）
+        // Open Dashboard 或Accounts Overview（根据User上次Select的View）
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.open', async (options?: { tab?: string; forceView?: 'dashboard' | 'accountsOverview' }) => {
                 const config = configService.getConfig();
                 
-                // 检查用户上次选择的视图状态
+                // CheckUser上次Select的ViewState
                 const lastActiveView = configService.getStateValue<string>('lastActiveView', 'dashboard');
                 const targetView = options?.forceView || lastActiveView;
                 
-                // 如果用户上次选择的是账号总览，则打开账号总览
+                // 如果User上次Select的是Accounts Overview，则Open accounts overview
                 if (targetView === 'accountsOverview') {
                     logger.info('[CommandController] Opening AccountsOverview (last active view)');
                     this.hud.dispose();
@@ -41,13 +41,13 @@ export class CommandController {
                     return;
                 }
                 
-                // 否则打开 Dashboard
+                // 否则Open Dashboard
                 if (config.displayMode === DISPLAY_MODE.QUICKPICK) {
                     this.quickPickView.show();
                 } else {
                     const success = await this.hud.revealHud(options?.tab ?? 'quota');
                     if (!success) {
-                        // Webview 创建失败，引导用户切换到 QuickPick 模式
+                        // Webview CreateFailed，引导UserSwitch到 QuickPick 模式
                         const selection = await vscode.window.showWarningMessage(
                             t('webview.failedPrompt'),
                             t('webview.switchToQuickPick'),
@@ -64,7 +64,7 @@ export class CommandController {
             }),
         );
 
-        // 手动刷新
+        // 手动Refresh
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.refresh', () => {
                 this.reactor.syncTelemetry();
@@ -72,7 +72,7 @@ export class CommandController {
             }),
         );
 
-        // 强制刷新模型缓存
+        // 强制RefreshModelCache
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.refreshModelCache', async () => {
                 try {
@@ -85,28 +85,28 @@ export class CommandController {
             }),
         );
 
-        // 显示日志
+        // Show logs
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.showLogs', () => {
                 logger.show();
             }),
         );
 
-        // 重试连接
+        // Retry connection
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.retry', async () => {
                 await this.onRetry();
             }),
         );
 
-        // 打开反馈页面
+        // OpenFeedback页面
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.openFeedback', () => {
                 vscode.env.openExternal(vscode.Uri.parse(FEEDBACK_URL));
             }),
         );
 
-        // 设置警告阈值
+        // SetWarningThreshold
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.setWarningThreshold', async () => {
                 const config = configService.getConfig();
@@ -134,7 +134,7 @@ export class CommandController {
             }),
         );
 
-        // 设置危险阈值
+        // Set危险Threshold
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.setCriticalThreshold', async () => {
                 const config = configService.getConfig();
@@ -162,7 +162,7 @@ export class CommandController {
             }),
         );
 
-        // 强制刷新公告
+        // 强制RefreshAnnouncement
         this.context.subscriptions.push(
             vscode.commands.registerCommand('agCockpit.refreshAnnouncements', async () => {
                 try {
@@ -170,7 +170,7 @@ export class CommandController {
                     vscode.window.showInformationMessage(
                         t('announcement.refreshed').replace('{count}', String(state.announcements.length)),
                     );
-                    // 更新 HUD 中的公告状态
+                    // Update HUD 中的AnnouncementState
                     this.hud.sendMessage({
                         type: 'announcementState',
                         data: state,
