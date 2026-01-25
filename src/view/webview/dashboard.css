@@ -2993,3 +2993,244 @@ input:checked+.slider:before {
     background: var(--accent);
     color: white;
 }
+
+/* ============================================================
+   MODERN THEME OVERLAY - v2
+   Transforms existing HTML elements into modern card design
+   ============================================================ */
+
+/* Modern color palette */
+:root {
+    --progress-high: #2dd4bf;
+    --progress-medium: #fbbf24;
+    --progress-low: #ef4444;
+}
+
+/* ============ Progress Circle → Large Text + Horizontal Bar ============ */
+
+.progress-circle {
+    /* Transform from circle to column layout */
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    margin-bottom: 16px !important;
+    padding: 16px 0 !important;
+}
+
+.progress-circle::before {
+    /* Remove inner circle cutout */
+    display: none !important;
+}
+
+/* Remove the old track ::after */
+.progress-circle::after {
+    display: none !important;
+}
+
+/* Large percentage text */
+.percentage {
+    position: static !important;
+    font-size: 48px !important;
+    font-weight: 700 !important;
+    letter-spacing: -2px;
+    line-height: 1;
+    width: 100%;
+}
+
+/* Color classes for percentage text */
+.pct-high .percentage {
+    color: var(--progress-high);
+}
+
+.pct-medium .percentage {
+    color: var(--progress-medium);
+}
+
+.pct-low .percentage {
+    color: var(--progress-low);
+}
+
+/* ============ Horizontal Progress Bar Fill ============ */
+
+/* Progress bar container with track background */
+.progress-circle .percentage::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    margin-top: 16px;
+    /* Track background */
+    background: rgba(255, 255, 255, 0.1);
+    position: relative;
+}
+
+/* Fill bar using box-shadow inset trick or linear-gradient */
+.pct-high .percentage::after {
+    background: linear-gradient(to right, var(--progress-high) var(--pct, 0%), rgba(255, 255, 255, 0.1) var(--pct, 0%));
+}
+
+.pct-medium .percentage::after {
+    background: linear-gradient(to right, var(--progress-medium) var(--pct, 0%), rgba(255, 255, 255, 0.1) var(--pct, 0%));
+}
+
+.pct-low .percentage::after {
+    background: linear-gradient(to right, var(--progress-low) var(--pct, 0%), rgba(255, 255, 255, 0.1) var(--pct, 0%));
+}
+
+/* ============ Info Grid → Horizontal Single Line ============ */
+
+/* Container for info rows - horizontal flex */
+.info-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100%;
+    gap: 0;
+    border-top: 1px solid var(--border-color);
+    padding-top: 12px;
+    margin-bottom: 8px;
+}
+
+/* Individual info items */
+.info-grid .info-row {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1;
+    padding: 0 12px 0 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+/* Info row labels - smaller, uppercase */
+.info-grid .info-row>span:first-child {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+/* Info row values */
+.info-grid .info-row .info-value {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* ============ Group Models → Pill Style ============ */
+
+.group-models {
+    border-top: 1px solid var(--border-color) !important;
+    padding-top: 12px !important;
+    margin-top: 8px !important;
+}
+
+.group-models-label {
+    font-size: 10px !important;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary) !important;
+    margin-bottom: 10px !important;
+}
+
+.group-models-list {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+}
+
+/* Smaller pill-style model tags */
+.group-model-tag {
+    display: inline-flex !important;
+    width: auto !important;
+    padding: 6px 12px !important;
+    background: rgba(45, 212, 191, 0.08) !important;
+    border: 1px solid rgba(45, 212, 191, 0.4) !important;
+    border-radius: 16px !important;
+    color: var(--text-primary) !important;
+    font-size: 11px !important;
+    align-items: center;
+    white-space: nowrap !important;
+    transition: all 0.2s ease;
+}
+
+.group-model-tag:hover {
+    background: rgba(45, 212, 191, 0.15) !important;
+    border-color: rgba(45, 212, 191, 0.6) !important;
+}
+
+/* Remove bullet and chevron for pill style */
+.group-model-tag::before {
+    display: none !important;
+}
+
+.group-model-tag::after {
+    display: none !important;
+}
+
+/* ============ Auto Group Toolbar ============ */
+
+.auto-group-toolbar {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.grouping-hint {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    flex: 1;
+}
+
+.auto-group-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.auto-group-link:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+/* ============ Card Alignment ============ */
+
+.card {
+    align-items: stretch !important;
+}
+
+/* Hide rename button by default, show on hover */
+.rename-group-btn,
+.rename-model-btn {
+    opacity: 0.3;
+    transition: opacity 0.2s;
+}
+
+.card:hover .rename-group-btn,
+.card:hover .rename-model-btn {
+    opacity: 1;
+}

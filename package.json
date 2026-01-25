@@ -3,7 +3,7 @@
   "displayName": "Antigravity FuelGauge",
   "icon": "assets/icon.png",
   "description": "A secure, self-hosted quota fuel gauge for Antigravity AI.",
-  "version": "2.1.0",
+  "version": "2.1.5",
   "publisher": "self-hosted",
   "engines": {
     "vscode": "^1.90.0"

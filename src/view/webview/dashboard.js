@@ -779,14 +779,14 @@
         if (message.type === 'antigravityToolsSyncComplete') {
             handleAntigravityToolsSyncComplete(message.data?.success, message.data?.error);
         }
-        
+
         // Handle Cockpit Tools DataSyncMessage
         if (message.type === 'refreshAccounts') {
             // Cockpit Tools Data变更，RefreshAuthorizationState和AccountList
             vscode.postMessage({ command: 'getAutoTriggerState' });
             showToast(i18n['cockpitTools.dataChanged'] || 'AccountData已Update', 'info');
         }
-        
+
         if (message.type === 'accountSwitched') {
             // AccountSwitchDone
             vscode.postMessage({ command: 'getAutoTriggerState' });
@@ -941,7 +941,7 @@
 
             // 绑定Close button
             document.getElementById('close-at-sync-config-modal')?.addEventListener('click', closeATSyncConfigModal);
-            
+
             // 点击背景Close
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) closeATSyncConfigModal();
@@ -1179,7 +1179,7 @@
                 </div>
             `;
             modal.classList.remove('hidden');
-            
+
             modal.querySelector('#antigravityTools-sync-close')?.addEventListener('click', () => {
                 modal.classList.add('hidden');
             });
@@ -1557,14 +1557,14 @@
     function updateAntigravityToolsSyncProgress(current, total, email) {
         const cancelText = i18n['common.cancel'] || 'Cancel';
         const progressText = `${i18n['autoTrigger.importing'] || 'Importing...'} ${current}/${total}`;
-        
+
         // Update antigravityTools-sync-modal 中的Button
         const syncModal = document.getElementById('antigravityTools-sync-modal');
         if (syncModal) {
             const importOnlyBtn = syncModal.querySelector('#antigravityTools-sync-import-only');
             const importSwitchBtn = syncModal.querySelector('#antigravityTools-sync-import-switch');
             const cancelBtn = syncModal.querySelector('#antigravityTools-sync-cancel');
-            
+
             // ShowProgress
             if (importOnlyBtn && importOnlyBtn.disabled) {
                 importOnlyBtn.textContent = progressText;
@@ -1572,7 +1572,7 @@
             if (importSwitchBtn && importSwitchBtn.disabled) {
                 importSwitchBtn.textContent = progressText;
             }
-            
+
             // EnableCancelButton
             if (cancelBtn) {
                 cancelBtn.disabled = false;
@@ -1590,11 +1590,11 @@
         if (jsonModal) {
             const importBtn = jsonModal.querySelector('#antigravityTools-json-import');
             const cancelBtn = jsonModal.querySelector('#antigravityTools-json-cancel');
-            
+
             if (importBtn && importBtn.disabled) {
                 importBtn.textContent = progressText;
             }
-            
+
             // EnableCancelButton
             if (cancelBtn) {
                 cancelBtn.disabled = false;
@@ -1705,7 +1705,7 @@
                 ? `<span class="account-count-badge" title="${i18n['autoTrigger.manageAccounts'] || 'Manage Accounts'}">+${extraCount}</span>`
                 : '';
             const manageBtn = `<button id="quota-account-manage-btn" class="quota-account-manage-btn" title="${i18n['autoTrigger.manageAccounts']}">${i18n['autoTrigger.manageAccounts']}</button>`;
-            
+
             row.innerHTML = `
                 <div class="quota-auth-info quota-auth-info-clickable" title="${i18n['autoTrigger.manageAccounts']}">
                     <span class="quota-auth-icon">✅</span>
@@ -1786,7 +1786,7 @@
 
             // 绑定Close button
             document.getElementById('close-account-manage-modal')?.addEventListener('click', closeAccountManageModal);
-            
+
             // 点击背景Close
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) closeAccountManageModal();
@@ -1829,10 +1829,10 @@
             const icon = isInvalid ? '⚠️' : (isActive ? '✅' : '👤');
             const invalidBadge = isInvalid ? `<span class="account-manage-badge expired">${i18n['autoTrigger.tokenExpired'] || 'Expired'}</span>` : '';
             const activeBadge = isActive && !isInvalid ? `<span class="account-manage-badge">${i18n['autoTrigger.accountActive'] || 'Active'}</span>` : '';
-            
+
             // Switch登录账户Button（所有Account都Show）
             const switchBtn = `<button class="at-btn at-btn-small at-btn-primary account-switch-login-btn" data-email="${acc.email}">${i18n['autoTrigger.switchLoginBtn'] || 'Switch登录'}</button>`;
-            
+
             return `
                 <div class="account-manage-item ${isActive ? 'active' : ''}${invalidClass}" data-email="${acc.email}">
                     <div class="account-manage-info">
@@ -1855,7 +1855,7 @@
             item.addEventListener('click', (e) => {
                 // 如果点击的是Button，则Ignore（Button已有阻止冒泡，但多一层判断更安全）
                 if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
-                
+
                 // 如果已Activate，不Execute操作
                 if (item.classList.contains('active')) return;
 
@@ -3047,7 +3047,7 @@
 
         for (const defaultGroup of defaultGroups) {
             const groupModels = [];
-            
+
             for (const model of models) {
                 // 精确匹配Model ID
                 if (defaultGroup.modelIds.includes(model.modelId)) {
@@ -3065,7 +3065,7 @@
                         break;
                     }
                 }
-                
+
                 groupMap.set(defaultGroup.id, {
                     id: defaultGroup.id,
                     name: inheritedName || defaultGroup.name,
@@ -3426,22 +3426,24 @@
                     <span class="status-dot" style="background-color: ${color}"></span>
                 </div>
             </div>
-            <div class="progress-circle" style="background: conic-gradient(${color} ${pct}%, var(--border-color) ${pct}%);">
+            <div class="progress-circle pct-${pct >= 60 ? 'high' : (pct >= 30 ? 'medium' : 'low')}" data-pct="${pct}" style="--pct: ${pct}%; background: conic-gradient(${color} ${pct}%, var(--border-color) ${pct}%);">
                 <div class="percentage">${pct.toFixed(2)}%</div>
             </div>
-            <div class="info-row">
-                <span>${i18n['dashboard.resetIn'] || 'Reset In'}</span>
-                <span class="info-value">${group.timeUntilResetFormatted}</span>
-            </div>
-            <div class="info-row">
-                <span>${i18n['dashboard.resetTime'] || 'Reset Time'}</span>
-                <span class="info-value small">${group.resetTimeDisplay || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-                <span>${i18n['dashboard.status'] || 'Status'}</span>
-                <span class="info-value" style="color: ${color}">
-                    ${getStatusText(pct)}
-                </span>
+            <div class="info-grid">
+                <div class="info-row">
+                    <span>${i18n['dashboard.resetIn'] || 'Reset In'}</span>
+                    <span class="info-value">${group.timeUntilResetFormatted}</span>
+                </div>
+                <div class="info-row">
+                    <span>${i18n['dashboard.resetTime'] || 'Reset Time'}</span>
+                    <span class="info-value small">${group.resetTimeDisplay || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span>${i18n['dashboard.status'] || 'Status'}</span>
+                    <span class="info-value" style="color: ${color}">
+                        ${getStatusText(pct)}
+                    </span>
+                </div>
             </div>
             <div class="group-models">
                 <div class="group-models-label">${i18n['grouping.models'] || 'Models'} (${group.models.length}):</div>
@@ -3533,22 +3535,24 @@
                     <span class="status-dot" style="background-color: ${color}"></span>
                 </div>
             </div>
-            <div class="progress-circle" style="background: conic-gradient(${color} ${pct}%, var(--border-color) ${pct}%);">
+            <div class="progress-circle pct-${pct >= 60 ? 'high' : (pct >= 30 ? 'medium' : 'low')}" data-pct="${pct}" style="--pct: ${pct}%; background: conic-gradient(${color} ${pct}%, var(--border-color) ${pct}%);">
                 <div class="percentage">${pct.toFixed(2)}%</div>
             </div>
-            <div class="info-row">
-                <span>${i18n['dashboard.resetIn'] || 'Reset In'}</span>
-                <span class="info-value">${model.timeUntilResetFormatted}</span>
-            </div>
-            <div class="info-row">
-                <span>${i18n['dashboard.resetTime'] || 'Reset Time'}</span>
-                <span class="info-value small">${model.resetTimeDisplay || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-                <span>${i18n['dashboard.status'] || 'Status'}</span>
-                <span class="info-value" style="color: ${color}">
-                    ${getStatusText(pct)}
-                </span>
+            <div class="info-grid">
+                <div class="info-row">
+                    <span>${i18n['dashboard.resetIn'] || 'Reset In'}</span>
+                    <span class="info-value">${model.timeUntilResetFormatted}</span>
+                </div>
+                <div class="info-row">
+                    <span>${i18n['dashboard.resetTime'] || 'Reset Time'}</span>
+                    <span class="info-value small">${model.resetTimeDisplay || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span>${i18n['dashboard.status'] || 'Status'}</span>
+                    <span class="info-value" style="color: ${color}">
+                        ${getStatusText(pct)}
+                    </span>
+                </div>
             </div>
         `;
 
@@ -3705,7 +3709,7 @@
         // RenderContent和图片
         if (popupContent) {
             let contentHtml = `<div class="announcement-text">${escapeHtml(ann.content).replace(/\n/g, '<br>')}</div>`;
-            
+
             // 如果有图片，Render图片区域（带骨架屏占位符）
             if (ann.images && ann.images.length > 0) {
                 contentHtml += '<div class="announcement-images">';
@@ -3726,14 +3730,14 @@
             }
 
             popupContent.innerHTML = contentHtml;
-            
+
             // 绑定图片LoadEvent
             popupContent.querySelectorAll('.announcement-image').forEach(imgEl => {
                 // 图片LoadDone
                 imgEl.addEventListener('load', () => {
                     imgEl.classList.add('loaded');
                 });
-                
+
                 // 图片LoadFailed
                 imgEl.addEventListener('error', () => {
                     const item = imgEl.closest('.announcement-image-item');
@@ -3750,7 +3754,7 @@
                         item.insertBefore(errorDiv, item.firstChild);
                     }
                 });
-                
+
                 // 点击放大
                 imgEl.addEventListener('click', () => {
                     const url = imgEl.getAttribute('data-preview-url');
