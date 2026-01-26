@@ -76,7 +76,7 @@ class CredentialStorage {
      * Save all credentials storage
      */
     private async saveCredentialsStorage(
-        storage: CredentialsStorage
+        storage: CredentialsStorage,
     ): Promise<void> {
         this.ensureInitialized();
         try {
@@ -104,7 +104,7 @@ class CredentialStorage {
      */
     async saveCredentialForAccount(
         email: string,
-        credential: OAuthCredential
+        credential: OAuthCredential,
     ): Promise<'added' | 'duplicate'> {
         const storage = await this.getCredentialsStorage();
 

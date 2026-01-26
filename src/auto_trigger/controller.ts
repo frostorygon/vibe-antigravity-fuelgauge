@@ -47,6 +47,9 @@ class AutoTriggerController {
     /** 账户操作互斥锁，防止并发账户操作导致State不一致 */
     private accountOperationLock: Promise<void> = Promise.resolve();
 
+    /** QuotaReset检测并发锁 */
+    private isCheckingQuota = false;
+
     /**
      * Execute账户操作时Get互斥锁
      * 确保同一Time只有一个账户操作（Delete、Switch、Import等）在Execute
@@ -525,56 +528,66 @@ class AutoTriggerController {
      * 由ScheduledRefresh或手动触发调用
      */
     async checkAndTriggerOnQuotaReset(): Promise<void> {
-        logger.debug('[AutoTriggerController] checkAndTriggerOnQuotaReset called (multi-account)');
-
-        // Get调度Config
-        const schedule = credentialStorage.getState<ScheduleConfig>(SCHEDULE_CONFIG_KEY, {
-            enabled: false,
-            repeatMode: 'daily',
-            selectedModels: ['gemini-3-flash'],
-            maxOutputTokens: 0,
-        });
-
-        logger.debug(`[AutoTriggerController] Schedule config: enabled=${schedule.enabled}, wakeOnReset=${schedule.wakeOnReset}, selectedAccounts=${JSON.stringify(schedule.selectedAccounts)}, selectedModels=${JSON.stringify(schedule.selectedModels)}`);
-
-        if (!schedule.enabled) {
-            logger.debug('[AutoTriggerController] Wake-up disabled, skipping');
+        if (this.isCheckingQuota) {
+            logger.debug('[AutoTriggerController] Quota check already in progress, skipping overlap');
             return;
         }
 
-        // Check是否Enable了"QuotaReset时自动Wakeup"
-        if (!schedule.wakeOnReset) {
-            logger.debug('[AutoTriggerController] Wake on reset is disabled, skipping');
-            return;
-        }
+        this.isCheckingQuota = true;
+        try {
+            logger.debug('[AutoTriggerController] checkAndTriggerOnQuotaReset called (multi-account)');
 
-        // Check时段策略
-        if (schedule.timeWindowEnabled) {
-            const inWindow = this.isInTimeWindow(schedule.timeWindowStart, schedule.timeWindowEnd);
-            if (!inWindow) {
-                logger.debug('[AutoTriggerController] Outside time window, quota reset trigger skipped (will use fallback times)');
+            // Get调度Config
+            const schedule = credentialStorage.getState<ScheduleConfig>(SCHEDULE_CONFIG_KEY, {
+                enabled: false,
+                repeatMode: 'daily',
+                selectedModels: ['gemini-3-flash'],
+                maxOutputTokens: 0,
+            });
+
+            logger.debug(`[AutoTriggerController] Schedule config: enabled=${schedule.enabled}, wakeOnReset=${schedule.wakeOnReset}, selectedAccounts=${JSON.stringify(schedule.selectedAccounts)}, selectedModels=${JSON.stringify(schedule.selectedModels)}`);
+
+            if (!schedule.enabled) {
+                logger.debug('[AutoTriggerController] Wake-up disabled, skipping');
                 return;
             }
-        }
 
-        // Get所有选中的Account
-        const accounts = await this.resolveScheduleAccounts(schedule);
-        if (accounts.length === 0) {
-            logger.debug('[AutoTriggerController] Wake on reset: No valid accounts, skipping');
-            return;
-        }
+            // Check是否Enable了"QuotaReset时自动Wakeup"
+            if (!schedule.wakeOnReset) {
+                logger.debug('[AutoTriggerController] Wake on reset is disabled, skipping');
+                return;
+            }
 
-        const selectedModels = schedule.selectedModels || [];
-        if (selectedModels.length === 0) {
-            logger.debug('[AutoTriggerController] Wake on reset: No models selected, skipping');
-            return;
-        }
+            // Check时段策略
+            if (schedule.timeWindowEnabled) {
+                const inWindow = this.isInTimeWindow(schedule.timeWindowStart, schedule.timeWindowEnd);
+                if (!inWindow) {
+                    logger.debug('[AutoTriggerController] Outside time window, quota reset trigger skipped (will use fallback times)');
+                    return;
+                }
+            }
 
-        logger.info(`[AutoTriggerController] Wake on reset: Checking ${accounts.length} accounts, ${selectedModels.length} models`);
+            // Get所有选中的Account
+            const accounts = await this.resolveScheduleAccounts(schedule);
+            if (accounts.length === 0) {
+                logger.debug('[AutoTriggerController] Wake on reset: No valid accounts, skipping');
+                return;
+            }
 
-        // 遍历每个选中的Account，独立检测Quota
-        for (const email of accounts) {
-            await this.checkAndTriggerForAccount(email, schedule, selectedModels);
+            const selectedModels = schedule.selectedModels || [];
+            if (selectedModels.length === 0) {
+                logger.debug('[AutoTriggerController] Wake on reset: No models selected, skipping');
+                return;
+            }
+
+            logger.info(`[AutoTriggerController] Wake on reset: Checking ${accounts.length} accounts, ${selectedModels.length} models`);
+
+            // 遍历每个选中的Account，独立检测Quota
+            for (const email of accounts) {
+                await this.checkAndTriggerForAccount(email, schedule, selectedModels);
+            }
+        } finally {
+            this.isCheckingQuota = false;
         }
     }
 
