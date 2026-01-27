@@ -1,6 +1,6 @@
 # Antigravity FuelGauge
 
-A VS Code extension for monitoring Antigravity AI token usage and quotas in real-time.
+An Antigravity extension for monitoring AI token usage and quotas in real-time.
 
 ## Building the Extension
 
