@@ -18,8 +18,8 @@ This will generate a `.vsix` file (e.g., `antigravity-fuelgauge-2.1.6.vsix`).
 code --install-extension antigravity-fuelgauge-2.1.6.vsix
 ```
 
-Or install manually via VS Code:
-1. Open VS Code
+Or install manually via Google's Antigravity IDE:
+1. Open Google's Antigravity IDE
 2. Go to Extensions (Ctrl+Shift+X)
 3. Click the `...` menu → "Install from VSIX..."
 4. Select the generated `.vsix` file
