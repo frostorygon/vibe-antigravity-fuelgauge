@@ -1,6 +1,26 @@
 # Antigravity FuelGauge
 
-An Antigravity extension for monitoring AI token usage and quotas in real-time.
+A secure, self-hosted quota fuel gauge for Antigravity AI.
+
+![Dashboard](docs/dashboard.png)
+
+## Features
+
+- 📊 **Real-time quota monitoring** - Track Claude, Gemini, and other AI model usage
+- 🔄 **Auto-refresh** - Configurable refresh intervals with manual refresh option
+- 📱 **Multi-account support** - Manage multiple Antigravity accounts
+- 🎨 **Quota Groups** - Aggregate models sharing the same quota pool
+- 🔔 **Threshold alerts** - Warning and critical notifications when quota runs low
+- 🔒 **Secure by design** - Credentials stored in VS Code SecretStorage (encrypted)
+
+## Security
+
+This is a **secure fork** that addresses vulnerabilities found in similar extensions:
+
+- ✅ **No plaintext credential storage** - Uses VS Code's encrypted SecretStorage only
+- ✅ **No WebSocket server** - No unauthenticated network listeners
+- ✅ **No telemetry** - Telemetry permanently disabled
+- ✅ **Localhost only** - All API calls stay on your machine
 
 ## Building the Extension
 

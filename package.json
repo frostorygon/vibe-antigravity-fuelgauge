@@ -334,9 +334,7 @@
     "lint:webview": "eslint src/view/webview/*.js",
     "package": "npx vsce package",
     "test": "jest",
-    "pretest": "npm run compile",
-    "postinstall": "bash scripts/install-hooks.sh",
-    "release": "bash scripts/release.sh"
+    "pretest": "npm run compile"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
